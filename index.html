@@ -349,6 +349,8 @@
     const historyList = document.getElementById("historyList");
     const storageKey = "carstudioRecentSeeds";
 
+    localStorage.removeItem(storageKey);
+    historyList.innerHTML = "";
     countText.textContent = cars.length.toLocaleString("ko-KR") + "개 모델";
 
     function hashSeed(value) {
@@ -363,37 +365,6 @@
     function pickCar(seed) {
       const hash = hashSeed(seed);
       return { car: cars[hash % cars.length], index: hash % cars.length };
-    }
-
-    function readHistory() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        return Array.isArray(parsed) ? parsed.filter(Boolean).slice(0, 6) : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveHistory(seed) {
-      const next = [seed, ...readHistory().filter((item) => item !== seed)].slice(0, 6);
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      renderHistory(next);
-    }
-
-    function renderHistory(items = readHistory()) {
-      historyList.innerHTML = "";
-      items.forEach((seed) => {
-        const item = document.createElement("li");
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = seed;
-        button.addEventListener("click", () => {
-          input.value = seed;
-          renderPick(seed);
-        });
-        item.appendChild(button);
-        historyList.appendChild(item);
-      });
     }
 
     function renderPick(seed) {
@@ -414,7 +385,6 @@
       carImage.classList.remove("ready");
       carImage.alt = car.name + " 차량 이미지";
       carImage.src = car.image;
-      saveHistory(trimmed);
     }
 
     carImage.addEventListener("load", () => {
@@ -425,13 +395,6 @@
       event.preventDefault();
       renderPick(input.value);
     });
-
-    const lastSeed = readHistory()[0];
-    renderHistory();
-    if (lastSeed) {
-      input.value = lastSeed;
-      renderPick(lastSeed);
-    }
   </script>
 </body>
 </html>
