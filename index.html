@@ -13,10 +13,46 @@
       --text: #111318;
       --muted: #657181;
       --line: #d8dee6;
+      --control-bg: #111318;
+      --control-text: #ffffff;
+      --control-muted: #c4ccd8;
+      --control-subtle: #aab3c1;
+      --field-bg: #090b10;
+      --field-border: #384152;
+      --field-text: #ffffff;
+      --result-bg: #f9fafb;
+      --stage-bg: linear-gradient(180deg, #fdfefe 0%, #edf1f6 100%);
+      --frame-bg: #ffffff;
+      --meta-bg: #fbfcfe;
       --accent: #0f6bff;
       --accent-dark: #0849b6;
       --accent-soft: #eaf2ff;
       --shadow: 0 18px 55px rgba(15, 28, 45, 0.13);
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #07090d;
+      --panel: #11151d;
+      --panel-strong: #05070a;
+      --text: #f4f7fb;
+      --muted: #9aa6b6;
+      --line: #293241;
+      --control-bg: #05070a;
+      --control-text: #ffffff;
+      --control-muted: #cbd5e1;
+      --control-subtle: #97a3b5;
+      --field-bg: #111722;
+      --field-border: #354155;
+      --field-text: #f8fafc;
+      --result-bg: #0d1118;
+      --stage-bg: linear-gradient(180deg, #151b25 0%, #090d13 100%);
+      --frame-bg: #0a0e14;
+      --meta-bg: #161c27;
+      --accent: #4b8dff;
+      --accent-dark: #2f6fdc;
+      --accent-soft: #152640;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
     }
 
     * { box-sizing: border-box; }
@@ -52,8 +88,8 @@
       justify-content: space-between;
       gap: 32px;
       padding: 34px;
-      background: var(--panel-strong);
-      color: #fff;
+      background: var(--control-bg);
+      color: var(--control-text);
     }
 
     .brand {
@@ -70,9 +106,81 @@
     }
 
     .count {
-      color: #aab3c1;
+      color: var(--control-subtle);
       font-size: 13px;
       white-space: nowrap;
+    }
+
+    .brand-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-toggle {
+      position: relative;
+      width: 58px;
+      height: 32px;
+      min-height: 32px;
+      border: 1px solid var(--field-border);
+      border-radius: 999px;
+      padding: 3px;
+      background: #ffffff;
+      color: #111318;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .theme-toggle[data-theme="dark"] {
+      background: #111318;
+      color: #ffffff;
+    }
+
+    .theme-toggle:hover {
+      background: #ffffff;
+    }
+
+    .theme-toggle[data-theme="dark"]:hover {
+      background: #111318;
+    }
+
+    .theme-toggle:focus-visible {
+      outline: 3px solid rgba(106, 161, 255, 0.42);
+      outline-offset: 3px;
+    }
+
+    .theme-sun {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      transform: translateX(0);
+      transition: transform 180ms ease, color 180ms ease;
+    }
+
+    .theme-toggle[data-theme="dark"] .theme-sun {
+      transform: translateX(26px);
+    }
+
+    .theme-sun::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+    }
+
+    .theme-sun::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      background:
+        conic-gradient(from 0deg, currentColor 0 10deg, transparent 10deg 50deg, currentColor 50deg 60deg, transparent 60deg 100deg, currentColor 100deg 110deg, transparent 110deg 150deg, currentColor 150deg 160deg, transparent 160deg 200deg, currentColor 200deg 210deg, transparent 210deg 250deg, currentColor 250deg 260deg, transparent 260deg 300deg, currentColor 300deg 310deg, transparent 310deg 350deg, currentColor 350deg 360deg);
+      border-radius: 50%;
+      clip-path: polygon(50% 0, 58% 32%, 90% 12%, 68% 42%, 100% 50%, 68% 58%, 90% 88%, 58% 68%, 50% 100%, 42% 68%, 10% 88%, 32% 58%, 0 50%, 32% 42%, 10% 12%, 42% 32%);
     }
 
     h1 {
@@ -85,7 +193,7 @@
     .lead {
       max-width: 430px;
       margin: 0 0 30px;
-      color: #c4ccd8;
+      color: var(--control-muted);
       font-size: 16px;
       line-height: 1.7;
     }
@@ -99,7 +207,7 @@
     label {
       display: grid;
       gap: 8px;
-      color: #c4ccd8;
+      color: var(--control-muted);
       font-size: 13px;
       font-weight: 700;
     }
@@ -122,11 +230,11 @@
     select {
       width: 100%;
       min-height: 48px;
-      border: 1px solid #384152;
+      border: 1px solid var(--field-border);
       border-radius: 6px;
       padding: 12px 14px;
-      background: #090b10;
-      color: #fff;
+      background-color: var(--field-bg);
+      color: var(--field-text);
       font: inherit;
       font-size: 16px;
     }
@@ -173,7 +281,7 @@
 
     .hint {
       min-height: 22px;
-      color: #aab3c1;
+      color: var(--control-subtle);
       font-size: 13px;
     }
 
@@ -200,14 +308,14 @@
       display: grid;
       grid-template-rows: minmax(280px, 1fr) auto;
       min-height: 100%;
-      background: #f9fafb;
+      background: var(--result-bg);
     }
 
     .image-stage {
       display: grid;
       place-items: center;
       padding: 42px 28px 22px;
-      background: linear-gradient(180deg, #fdfefe 0%, #edf1f6 100%);
+      background: var(--stage-bg);
     }
 
     .image-frame {
@@ -217,7 +325,7 @@
       place-items: center;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fff;
+      background: var(--frame-bg);
       overflow: hidden;
     }
 
@@ -277,7 +385,7 @@
       border: 1px solid var(--line);
       border-radius: 6px;
       padding: 12px;
-      background: #fbfcfe;
+      background: var(--meta-bg);
     }
 
     .meta strong {
@@ -314,7 +422,12 @@
         <div>
           <div class="brand">
             <strong>Car Studio</strong>
-            <span class="count" id="countText"></span>
+            <div class="brand-actions">
+              <span class="count" id="countText"></span>
+              <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" data-theme="light">
+                <span class="theme-sun" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
           <h1>이름으로 뽑는 랜덤 자동차</h1>
           <p class="lead">같은 이름은 같은 차량으로 다시 연결됩니다.</p>
@@ -387,7 +500,20 @@
     const matchText = document.getElementById("matchText");
     const countText = document.getElementById("countText");
     const historyList = document.getElementById("historyList");
+    const themeToggle = document.getElementById("themeToggle");
     const storageKey = "carstudioRecentSeeds";
+    const themeStorageKey = "carstudioTheme";
+
+    function applyTheme(theme) {
+      const nextTheme = theme === "dark" ? "dark" : "light";
+      document.documentElement.dataset.theme = nextTheme;
+      themeToggle.dataset.theme = nextTheme;
+      themeToggle.setAttribute("aria-pressed", String(nextTheme === "dark"));
+      themeToggle.setAttribute("aria-label", nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+      localStorage.setItem(themeStorageKey, nextTheme);
+    }
+
+    applyTheme(localStorage.getItem(themeStorageKey) || "light");
 
     localStorage.removeItem(storageKey);
     historyList.innerHTML = "";
@@ -459,6 +585,10 @@
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       renderPick(input.value);
+    });
+
+    themeToggle.addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     });
   </script>
 </body>
