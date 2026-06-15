@@ -197,6 +197,10 @@
       letter-spacing: 0;
     }
 
+    .mobile-join {
+      display: none;
+    }
+
     .lead {
       max-width: 430px;
       margin: 0 0 30px;
@@ -423,6 +427,8 @@
         font-size: clamp(21px, 6.4vw, 27px);
         white-space: nowrap;
       }
+      h1 br { display: none; }
+      .mobile-join { display: inline; }
     }
   </style>
 </head>
@@ -440,7 +446,7 @@
               </button>
             </div>
           </div>
-          <h1>생애 한 번 뿐인 랜덤 자동차</h1>
+          <h1>생애 한 번 뿐인<br><span class="mobile-join"> </span>랜덤 자동차</h1>
           <p class="lead">같은 이름은 같은 차량으로 다시 연결됩니다.</p>
           <form id="pickerForm">
             <div class="profile-row">
