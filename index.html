@@ -230,7 +230,13 @@
     }
 
     .profile-row {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 2fr;
+    }
+
+    .birthdate-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr) minmax(0, 0.72fr);
+      gap: 10px;
     }
 
     .input-row {
@@ -418,6 +424,9 @@
       .brand { margin-bottom: 28px; }
       .profile-row,
       .input-row { grid-template-columns: 1fr; }
+      .birthdate-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr) minmax(0, 0.72fr);
+      }
       button { width: 100%; }
       .history button { width: auto; }
       .result { min-height: 520px; }
@@ -457,11 +466,23 @@
                   <option value="female">여자</option>
                 </select>
               </label>
-              <label for="birthYearSelect">출생연도
-                <select id="birthYearSelect" required>
-                  <option value="">선택</option>
-                </select>
-              </label>
+              <div class="birthdate-row">
+                <label for="birthYearSelect">출생연도
+                  <select id="birthYearSelect" required>
+                    <option value="">선택</option>
+                  </select>
+                </label>
+                <label for="birthMonthSelect">월
+                  <select id="birthMonthSelect" required>
+                    <option value="">선택</option>
+                  </select>
+                </label>
+                <label for="birthDaySelect">일
+                  <select id="birthDaySelect" required>
+                    <option value="">선택</option>
+                  </select>
+                </label>
+              </div>
             </div>
             <label for="seedInput">이름
               <div class="input-row">
@@ -493,7 +514,7 @@
           <div class="meta">
             <div><strong>이름</strong><span id="seedText">-</span></div>
             <div><strong>성별</strong><span id="genderText">-</span></div>
-            <div><strong>출생연도</strong><span id="birthYearText">-</span></div>
+            <div><strong>생년월일</strong><span id="birthYearText">-</span></div>
             <div><strong>매칭 번호</strong><span id="matchText">-</span></div>
           </div>
         </div>
@@ -507,6 +528,8 @@
     const input = document.getElementById("seedInput");
     const genderSelect = document.getElementById("genderSelect");
     const birthYearSelect = document.getElementById("birthYearSelect");
+    const birthMonthSelect = document.getElementById("birthMonthSelect");
+    const birthDaySelect = document.getElementById("birthDaySelect");
     const hintText = document.getElementById("hintText");
     const carName = document.getElementById("carName");
     const carImage = document.getElementById("carImage");
@@ -543,6 +566,20 @@
       birthYearSelect.appendChild(option);
     }
 
+    for (let month = 1; month <= 12; month += 1) {
+      const option = document.createElement("option");
+      option.value = String(month);
+      option.textContent = month + "월";
+      birthMonthSelect.appendChild(option);
+    }
+
+    for (let day = 1; day <= 31; day += 1) {
+      const option = document.createElement("option");
+      option.value = String(day);
+      option.textContent = day + "일";
+      birthDaySelect.appendChild(option);
+    }
+
     function hashSeed(value) {
       let hash = 2166136261;
       for (const char of value.normalize("NFKC")) {
@@ -561,6 +598,8 @@
       const trimmed = seed.trim();
       const gender = genderSelect.value;
       const birthYear = birthYearSelect.value;
+      const birthMonth = birthMonthSelect.value;
+      const birthDay = birthDaySelect.value;
 
       if (!gender) {
         hintText.textContent = "성별을 먼저 선택해주세요.";
@@ -574,19 +613,31 @@
         return;
       }
 
+      if (!birthMonth) {
+        hintText.textContent = "출생월을 먼저 선택해주세요.";
+        birthMonthSelect.focus();
+        return;
+      }
+
+      if (!birthDay) {
+        hintText.textContent = "출생일을 먼저 선택해주세요.";
+        birthDaySelect.focus();
+        return;
+      }
+
       if (!trimmed) {
         hintText.textContent = "이름을 먼저 넣어주세요.";
         input.focus();
         return;
       }
 
-      const profileSeed = [gender, birthYear, trimmed].join("|");
+      const profileSeed = [gender, birthYear, birthMonth, birthDay, trimmed].join("|");
       const { car, index } = pickCar(profileSeed);
-      hintText.textContent = "같은 성별, 출생연도, 이름은 항상 같은 차량으로 연결됩니다.";
+      hintText.textContent = "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.";
       carName.textContent = car.name;
       seedText.textContent = trimmed;
       genderText.textContent = gender === "male" ? "남자" : "여자";
-      birthYearText.textContent = birthYear + "년생";
+      birthYearText.textContent = birthYear + "년 " + birthMonth + "월 " + birthDay + "일";
       matchText.textContent = "#" + String(index + 1).padStart(3, "0");
       placeholder.hidden = true;
       carImage.hidden = false;
