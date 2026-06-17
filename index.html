@@ -9,21 +9,24 @@
       color-scheme: light;
       --bg: #f4f6f8;
       --panel: #ffffff;
-      --panel-strong: #111318;
+      --panel-strong: #eef2f7;
       --text: #111318;
       --muted: #657181;
       --line: #d8dee6;
-      --control-bg: #111318;
-      --control-text: #ffffff;
-      --control-muted: #c4ccd8;
-      --control-subtle: #aab3c1;
-      --field-bg: #090b10;
-      --field-border: #384152;
-      --field-text: #ffffff;
+      --control-bg: #ffffff;
+      --control-text: #111318;
+      --control-muted: #526173;
+      --control-subtle: #748094;
+      --field-bg: #fbfcfe;
+      --field-border: #cbd4df;
+      --field-text: #111318;
       --result-bg: #f9fafb;
       --stage-bg: linear-gradient(180deg, #fdfefe 0%, #edf1f6 100%);
       --frame-bg: #ffffff;
       --meta-bg: #fbfcfe;
+      --visitor-bg: #f7f9fc;
+      --visitor-label: #667386;
+      --visitor-value: #1f2937;
       --accent: #0f6bff;
       --accent-dark: #0849b6;
       --accent-soft: #eaf2ff;
@@ -49,6 +52,9 @@
       --stage-bg: linear-gradient(180deg, #151b25 0%, #090d13 100%);
       --frame-bg: #0a0e14;
       --meta-bg: #161c27;
+      --visitor-bg: #0d1118;
+      --visitor-label: #9aa6b6;
+      --visitor-value: #f4f7fb;
       --accent: #4b8dff;
       --accent-dark: #2f6fdc;
       --accent-soft: #152640;
@@ -258,7 +264,7 @@
 
     select {
       appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, #c4ccd8 50%), linear-gradient(135deg, #c4ccd8 50%, transparent 50%);
+      background-image: linear-gradient(45deg, transparent 50%, var(--control-subtle) 50%), linear-gradient(135deg, var(--control-subtle) 50%, transparent 50%);
       background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px;
       background-size: 6px 6px, 6px 6px;
       background-repeat: no-repeat;
@@ -302,6 +308,41 @@
       font-size: 13px;
     }
 
+    .visitor-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 470px;
+      margin-top: 2px;
+    }
+
+    .visitor-stat {
+      min-width: 0;
+      border: 1px solid var(--field-border);
+      border-radius: 6px;
+      padding: 12px 13px;
+      background: var(--visitor-bg);
+    }
+
+    .visitor-stat span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--visitor-label);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .visitor-stat strong {
+      display: block;
+      color: var(--visitor-value);
+      font-size: clamp(20px, 3vw, 26px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
     .history {
       display: flex;
       flex-wrap: wrap;
@@ -313,10 +354,10 @@
 
     .history button {
       min-height: 34px;
-      border-color: #343d4c;
+      border-color: var(--field-border);
       padding: 7px 10px;
       background: transparent;
-      color: #d7dde7;
+      color: var(--control-muted);
       font-size: 12px;
       font-weight: 700;
     }
@@ -428,6 +469,7 @@
         grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr) minmax(0, 0.72fr);
       }
       button { width: 100%; }
+      .visitor-stats { grid-template-columns: 1fr 1fr; }
       .history button { width: auto; }
       .result { min-height: 520px; }
       .details { padding: 24px 18px 28px; }
@@ -494,6 +536,16 @@
               </div>
             </label>
             <div class="hint" id="hintText"></div>
+            <div class="visitor-stats" aria-label="방문자 통계">
+              <div class="visitor-stat">
+                <span>오늘 방문자</span>
+                <strong id="todayVisitors">-</strong>
+              </div>
+              <div class="visitor-stat">
+                <span>누계 방문자</span>
+                <strong id="totalVisitors">-</strong>
+              </div>
+            </div>
           </form>
         </div>
         <ul class="history" id="historyList" aria-label="최근 이름"></ul>
@@ -541,8 +593,11 @@
     const countText = document.getElementById("countText");
     const historyList = document.getElementById("historyList");
     const themeToggle = document.getElementById("themeToggle");
+    const todayVisitors = document.getElementById("todayVisitors");
+    const totalVisitors = document.getElementById("totalVisitors");
     const storageKey = "carstudioRecentSeeds";
     const themeStorageKey = "carstudioTheme";
+    const visitorNamespace = "carstudio-dye";
 
     function applyTheme(theme) {
       const nextTheme = theme === "dark" ? "dark" : "light";
@@ -558,6 +613,63 @@
     localStorage.removeItem(storageKey);
     historyList.innerHTML = "";
     countText.textContent = cars.length.toLocaleString("ko-KR") + "개 모델";
+
+    function formatNumber(value) {
+      return Number(value || 0).toLocaleString("ko-KR");
+    }
+
+    function getTodayKey() {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+    }
+
+    function updateVisitorText(today, total) {
+      todayVisitors.textContent = formatNumber(today);
+      totalVisitors.textContent = formatNumber(total);
+    }
+
+    function bumpLocalVisitors(todayKey) {
+      const localKey = "carstudioVisitors";
+      const saved = JSON.parse(localStorage.getItem(localKey) || "{}");
+      const next = {
+        date: todayKey,
+        today: saved.date === todayKey ? Number(saved.today || 0) + 1 : 1,
+        total: Number(saved.total || 0) + 1
+      };
+      localStorage.setItem(localKey, JSON.stringify(next));
+      updateVisitorText(next.today, next.total);
+    }
+
+    async function bumpVisitors() {
+      const todayKey = getTodayKey();
+      const dailyKey = "daily-" + todayKey;
+
+      try {
+        const [todayResponse, totalResponse] = await Promise.all([
+          fetch("https://api.counterapi.dev/v1/" + visitorNamespace + "/" + dailyKey + "/up", { cache: "no-store" }),
+          fetch("https://api.counterapi.dev/v1/" + visitorNamespace + "/total/up", { cache: "no-store" })
+        ]);
+
+        if (!todayResponse.ok || !totalResponse.ok) {
+          throw new Error("Visitor counter request failed");
+        }
+
+        const [todayData, totalData] = await Promise.all([
+          todayResponse.json(),
+          totalResponse.json()
+        ]);
+
+        updateVisitorText(todayData.count, totalData.count);
+      } catch (error) {
+        bumpLocalVisitors(todayKey);
+      }
+    }
+
+    bumpVisitors();
 
     for (let year = 2026; year >= 1940; year -= 1) {
       const option = document.createElement("option");
