@@ -371,6 +371,7 @@
 
     .image-stage {
       display: grid;
+      gap: 16px;
       place-items: center;
       padding: 42px 28px 22px;
       background: var(--stage-bg);
@@ -407,6 +408,37 @@
       text-align: center;
       color: var(--muted);
       font-weight: 700;
+    }
+
+    .enhance-button {
+      width: min(100%, 590px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 900;
+      box-shadow: 0 12px 28px rgba(15, 107, 255, 0.22);
+    }
+
+    .enhance-button[hidden] {
+      display: none;
+    }
+
+    .enhance-button:disabled {
+      cursor: wait;
+      background: var(--accent-dark);
+      opacity: 0.78;
+    }
+
+    .enhance-button svg {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
     }
 
     .details {
@@ -557,6 +589,10 @@
             <div class="placeholder" id="placeholder">이름을 입력하면 차량 사진이 표시됩니다.</div>
             <img id="carImage" alt="" hidden>
           </div>
+          <button class="enhance-button" id="enhanceButton" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 11-13h-8l1-7z"/></svg>
+            <span>AI로 더 멋지게 만들기</span>
+          </button>
         </div>
         <div class="details">
           <div>
@@ -586,6 +622,7 @@
     const carName = document.getElementById("carName");
     const carImage = document.getElementById("carImage");
     const placeholder = document.getElementById("placeholder");
+    const enhanceButton = document.getElementById("enhanceButton");
     const seedText = document.getElementById("seedText");
     const genderText = document.getElementById("genderText");
     const birthYearText = document.getElementById("birthYearText");
@@ -598,6 +635,9 @@
     const storageKey = "carstudioRecentSeeds";
     const themeStorageKey = "carstudioTheme";
     const visitorNamespace = "carstudio-dye";
+    let selectedCar = null;
+    let selectedProfileSeed = "";
+    let showingEnhancedImage = false;
 
     function applyTheme(theme) {
       const nextTheme = theme === "dark" ? "dark" : "light";
@@ -706,6 +746,37 @@
       return { car: cars[hash % cars.length], index: hash % cars.length };
     }
 
+    function buildEnhancedImageUrl(car, profileSeed) {
+      const futureYear = 20 + (hashSeed(profileSeed + "|future-year") % 11);
+      const prompt = [
+        "A premium AI concept car redesign of the " + car.name,
+        "set " + futureYear + " years in the future",
+        "keep the original vehicle class, body silhouette, proportions, grille identity, and brand character recognizable",
+        "make it more luxurious, futuristic, aerodynamic, and dramatic",
+        "advanced LED lighting, clean studio background, realistic automotive photography",
+        "no text, no logos added, no people"
+      ].join(", ");
+      const seed = hashSeed(profileSeed + "|" + car.name + "|ai-enhance");
+      const params = new URLSearchParams({
+        width: "1024",
+        height: "640",
+        model: "flux",
+        seed: String(seed),
+        nologo: "true",
+        private: "true",
+        enhance: "true"
+      });
+
+      return "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) + "?" + params.toString();
+    }
+
+    function resetEnhancement() {
+      showingEnhancedImage = false;
+      enhanceButton.hidden = !selectedCar;
+      enhanceButton.disabled = false;
+      enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+    }
+
     function renderPick(seed) {
       const trimmed = seed.trim();
       const gender = genderSelect.value;
@@ -745,6 +816,8 @@
 
       const profileSeed = [gender, birthYear, birthMonth, birthDay, trimmed].join("|");
       const { car, index } = pickCar(profileSeed);
+      selectedCar = car;
+      selectedProfileSeed = profileSeed;
       hintText.textContent = "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.";
       carName.textContent = car.name;
       seedText.textContent = trimmed;
@@ -756,10 +829,40 @@
       carImage.classList.remove("ready");
       carImage.alt = car.name + " 차량 이미지";
       carImage.src = car.image;
+      resetEnhancement();
     }
 
     carImage.addEventListener("load", () => {
+      placeholder.hidden = true;
       carImage.classList.add("ready");
+      if (showingEnhancedImage) {
+        enhanceButton.disabled = false;
+        enhanceButton.querySelector("span").textContent = "AI로 다시 멋지게 만들기";
+      }
+    });
+
+    carImage.addEventListener("error", () => {
+      carImage.hidden = true;
+      placeholder.hidden = false;
+      placeholder.textContent = showingEnhancedImage
+        ? "AI 이미지 생성이 잠시 지연되고 있습니다. 다시 눌러주세요."
+        : "차량 이미지를 불러오지 못했습니다.";
+      enhanceButton.disabled = false;
+      enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+    });
+
+    enhanceButton.addEventListener("click", () => {
+      if (!selectedCar || !selectedProfileSeed) return;
+
+      showingEnhancedImage = true;
+      enhanceButton.disabled = true;
+      enhanceButton.querySelector("span").textContent = "AI 이미지 생성 중";
+      placeholder.textContent = selectedCar.name + "의 20~30년 뒤 모습을 만들고 있습니다.";
+      placeholder.hidden = false;
+      carImage.hidden = false;
+      carImage.classList.remove("ready");
+      carImage.alt = selectedCar.name + " AI 미래형 차량 이미지";
+      carImage.src = buildEnhancedImageUrl(selectedCar, selectedProfileSeed);
     });
 
     form.addEventListener("submit", (event) => {
