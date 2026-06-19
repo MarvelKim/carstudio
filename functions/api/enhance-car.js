@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
 
   const prompt = buildPrompt(carName, profileSeed);
   const seedHash = await hashText(`${carName}|${profileSeed}`);
-  const model = env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const model = env.OPENAI_IMAGE_MODEL || "gpt-image-1";
 
   let response;
   try {
@@ -74,6 +74,10 @@ export async function onRequestPost({ request, env }) {
   }
 
   const image = data.data?.[0];
+  if (image?.url) {
+    return json({ imageUrl: image.url });
+  }
+
   if (!image?.b64_json) {
     return json({ error: "OpenAI response did not include an image" }, 502);
   }

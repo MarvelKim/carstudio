@@ -364,7 +364,6 @@
 
     .result {
       display: grid;
-      grid-template-rows: minmax(280px, 1fr) auto;
       min-height: 100%;
       background: var(--result-bg);
     }
@@ -471,11 +470,11 @@
     }
 
     .details {
+      width: min(100%, 590px);
       display: grid;
-      gap: 18px;
-      padding: 28px 32px 34px;
-      border-top: 1px solid var(--line);
-      background: var(--panel);
+      gap: 14px;
+      padding: 0;
+      background: transparent;
     }
 
     .eyebrow {
@@ -540,7 +539,7 @@
       .visitor-stats { grid-template-columns: 1fr 1fr; }
       .history button { width: auto; }
       .result { min-height: 520px; }
-      .details { padding: 24px 18px 28px; }
+      .details { padding: 0; }
       .meta { grid-template-columns: 1fr; }
       .ad-space { min-height: 120px; }
       h1 {
@@ -630,17 +629,17 @@
             </div>
             <img id="carImage" alt="" hidden>
           </div>
+          <div class="details">
+            <div>
+              <p class="eyebrow">추천 차량</p>
+              <h2 class="car-name" id="carName">아직 선택되지 않음</h2>
+            </div>
+            <div class="ad-space" aria-label="광고 영역"></div>
+          </div>
           <button class="enhance-button" id="enhanceButton" type="button" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 11-13h-8l1-7z"/></svg>
             <span>AI로 더 멋지게 만들기</span>
           </button>
-        </div>
-        <div class="details">
-          <div>
-            <p class="eyebrow">추천 차량</p>
-            <h2 class="car-name" id="carName">아직 선택되지 않음</h2>
-          </div>
-          <div class="ad-space" aria-label="광고 영역"></div>
         </div>
       </div>
     </section>
