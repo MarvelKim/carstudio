@@ -379,18 +379,19 @@
 
     .image-frame {
       width: min(100%, 590px);
-      aspect-ratio: 16 / 10;
+      min-height: 300px;
       display: grid;
       place-items: center;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--frame-bg);
-      overflow: hidden;
+      overflow: visible;
     }
 
     .image-frame img {
       width: 100%;
-      height: 100%;
+      height: auto;
+      max-height: min(58vh, 520px);
       object-fit: contain;
       padding: 16px;
       opacity: 0;
@@ -408,6 +409,34 @@
       text-align: center;
       color: var(--muted);
       font-weight: 700;
+    }
+
+    .loading-indicator {
+      display: grid;
+      gap: 14px;
+      place-items: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .loading-indicator[hidden] {
+      display: none;
+    }
+
+    .loading-spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 840ms linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .enhance-button {
@@ -490,6 +519,13 @@
       overflow-wrap: anywhere;
     }
 
+    .ad-space {
+      min-height: 120px;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      background: var(--meta-bg);
+    }
+
     @media (max-width: 860px) {
       main { padding: 0; }
       .shell { grid-template-columns: 1fr; min-height: 100vh; border: 0; border-radius: 0; }
@@ -506,6 +542,7 @@
       .result { min-height: 520px; }
       .details { padding: 24px 18px 28px; }
       .meta { grid-template-columns: 1fr; }
+      .ad-space { min-height: 120px; }
       h1 {
         font-size: clamp(21px, 6.4vw, 27px);
         white-space: nowrap;
@@ -587,6 +624,10 @@
         <div class="image-stage">
           <div class="image-frame" id="imageFrame">
             <div class="placeholder" id="placeholder">이름을 입력하면 차량 사진이 표시됩니다.</div>
+            <div class="loading-indicator" id="loadingIndicator" hidden>
+              <span class="loading-spinner" aria-hidden="true"></span>
+              <span id="loadingText">AI 이미지 생성 중입니다.</span>
+            </div>
             <img id="carImage" alt="" hidden>
           </div>
           <button class="enhance-button" id="enhanceButton" type="button" hidden>
@@ -599,12 +640,7 @@
             <p class="eyebrow">추천 차량</p>
             <h2 class="car-name" id="carName">아직 선택되지 않음</h2>
           </div>
-          <div class="meta">
-            <div><strong>이름</strong><span id="seedText">-</span></div>
-            <div><strong>성별</strong><span id="genderText">-</span></div>
-            <div><strong>생년월일</strong><span id="birthYearText">-</span></div>
-            <div><strong>매칭 번호</strong><span id="matchText">-</span></div>
-          </div>
+          <div class="ad-space" aria-label="광고 영역"></div>
         </div>
       </div>
     </section>
@@ -622,11 +658,9 @@
     const carName = document.getElementById("carName");
     const carImage = document.getElementById("carImage");
     const placeholder = document.getElementById("placeholder");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+    const loadingText = document.getElementById("loadingText");
     const enhanceButton = document.getElementById("enhanceButton");
-    const seedText = document.getElementById("seedText");
-    const genderText = document.getElementById("genderText");
-    const birthYearText = document.getElementById("birthYearText");
-    const matchText = document.getElementById("matchText");
     const countText = document.getElementById("countText");
     const historyList = document.getElementById("historyList");
     const themeToggle = document.getElementById("themeToggle");
@@ -634,7 +668,6 @@
     const totalVisitors = document.getElementById("totalVisitors");
     const storageKey = "carstudioRecentSeeds";
     const themeStorageKey = "carstudioTheme";
-    const visitorNamespace = "carstudio-dye";
     let selectedCar = null;
     let selectedProfileSeed = "";
     let showingEnhancedImage = false;
@@ -686,24 +719,19 @@
 
     async function bumpVisitors() {
       const todayKey = getTodayKey();
-      const dailyKey = "daily-" + todayKey;
 
       try {
-        const [todayResponse, totalResponse] = await Promise.all([
-          fetch("https://api.counterapi.dev/v1/" + visitorNamespace + "/" + dailyKey + "/up", { cache: "no-store" }),
-          fetch("https://api.counterapi.dev/v1/" + visitorNamespace + "/total/up", { cache: "no-store" })
-        ]);
+        const response = await fetch("/api/visitors", {
+          method: "POST",
+          cache: "no-store"
+        });
 
-        if (!todayResponse.ok || !totalResponse.ok) {
+        if (!response.ok) {
           throw new Error("Visitor counter request failed");
         }
 
-        const [todayData, totalData] = await Promise.all([
-          todayResponse.json(),
-          totalResponse.json()
-        ]);
-
-        updateVisitorText(todayData.count, totalData.count);
+        const data = await response.json();
+        updateVisitorText(data.today, data.total);
       } catch (error) {
         bumpLocalVisitors(todayKey);
       }
@@ -746,28 +774,31 @@
       return { car: cars[hash % cars.length], index: hash % cars.length };
     }
 
-    function buildEnhancedImageUrl(car, profileSeed) {
-      const futureYear = 20 + (hashSeed(profileSeed + "|future-year") % 11);
-      const prompt = [
-        "A premium AI concept car redesign of the " + car.name,
-        "set " + futureYear + " years in the future",
-        "keep the original vehicle class, body silhouette, proportions, grille identity, and brand character recognizable",
-        "make it more luxurious, futuristic, aerodynamic, and dramatic",
-        "advanced LED lighting, clean studio background, realistic automotive photography",
-        "no text, no logos added, no people"
-      ].join(", ");
-      const seed = hashSeed(profileSeed + "|" + car.name + "|ai-enhance");
-      const params = new URLSearchParams({
-        width: "1024",
-        height: "640",
-        model: "flux",
-        seed: String(seed),
-        nologo: "true",
-        private: "true",
-        enhance: "true"
+    function setImageLoading(isLoading, message) {
+      loadingText.textContent = message || "AI 이미지 생성 중입니다.";
+      loadingIndicator.hidden = !isLoading;
+      placeholder.hidden = isLoading;
+      enhanceButton.disabled = isLoading;
+      enhanceButton.querySelector("span").textContent = isLoading ? "AI 이미지 생성 중" : "AI로 다시 멋지게 만들기";
+    }
+
+    async function createEnhancedImage(car, profileSeed) {
+      const response = await fetch("/api/enhance-car", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          carName: car.name,
+          sourceImage: car.image,
+          profileSeed
+        })
       });
 
-      return "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) + "?" + params.toString();
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.imageUrl) {
+        throw new Error(data.error || "AI image request failed");
+      }
+
+      return data.imageUrl;
     }
 
     function resetEnhancement() {
@@ -775,6 +806,7 @@
       enhanceButton.hidden = !selectedCar;
       enhanceButton.disabled = false;
       enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+      loadingIndicator.hidden = true;
     }
 
     function renderPick(seed) {
@@ -820,10 +852,7 @@
       selectedProfileSeed = profileSeed;
       hintText.textContent = "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.";
       carName.textContent = car.name;
-      seedText.textContent = trimmed;
-      genderText.textContent = gender === "male" ? "남자" : "여자";
-      birthYearText.textContent = birthYear + "년 " + birthMonth + "월 " + birthDay + "일";
-      matchText.textContent = "#" + String(index + 1).padStart(3, "0");
+      loadingIndicator.hidden = true;
       placeholder.hidden = true;
       carImage.hidden = false;
       carImage.classList.remove("ready");
@@ -834,6 +863,7 @@
 
     carImage.addEventListener("load", () => {
       placeholder.hidden = true;
+      loadingIndicator.hidden = true;
       carImage.classList.add("ready");
       if (showingEnhancedImage) {
         enhanceButton.disabled = false;
@@ -843,6 +873,7 @@
 
     carImage.addEventListener("error", () => {
       carImage.hidden = true;
+      loadingIndicator.hidden = true;
       placeholder.hidden = false;
       placeholder.textContent = showingEnhancedImage
         ? "AI 이미지 생성이 잠시 지연되고 있습니다. 다시 눌러주세요."
@@ -851,18 +882,26 @@
       enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
     });
 
-    enhanceButton.addEventListener("click", () => {
+    enhanceButton.addEventListener("click", async () => {
       if (!selectedCar || !selectedProfileSeed) return;
 
       showingEnhancedImage = true;
-      enhanceButton.disabled = true;
-      enhanceButton.querySelector("span").textContent = "AI 이미지 생성 중";
-      placeholder.textContent = selectedCar.name + "의 20~30년 뒤 모습을 만들고 있습니다.";
-      placeholder.hidden = false;
-      carImage.hidden = false;
+      setImageLoading(true, selectedCar.name + "의 20~30년 뒤 모습을 만들고 있습니다.");
+      carImage.hidden = true;
       carImage.classList.remove("ready");
       carImage.alt = selectedCar.name + " AI 미래형 차량 이미지";
-      carImage.src = buildEnhancedImageUrl(selectedCar, selectedProfileSeed);
+
+      try {
+        carImage.src = await createEnhancedImage(selectedCar, selectedProfileSeed);
+        carImage.hidden = false;
+      } catch (error) {
+        showingEnhancedImage = false;
+        loadingIndicator.hidden = true;
+        placeholder.textContent = "AI 이미지 생성에 실패했습니다. 잠시 뒤 다시 눌러주세요.";
+        placeholder.hidden = false;
+        enhanceButton.disabled = false;
+        enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+      }
     });
 
     form.addEventListener("submit", (event) => {
