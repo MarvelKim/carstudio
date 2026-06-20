@@ -36,7 +36,7 @@ export const createCarAiImage = async ({
   carName,
   profileSeed = "",
   sourceImageUrl = "",
-  model = "gemini-3.1-flash-image",
+  model = "gemini-2.5-flash-image",
   fetchImpl = fetch
 }) => {
   if (!apiKey) {

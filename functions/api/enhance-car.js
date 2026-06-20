@@ -35,7 +35,7 @@ export async function onRequestPost({ request, env }) {
       carName,
       profileSeed,
       sourceImageUrl: carImageUrl,
-      model: env.GEMINI_IMAGE_MODEL || "gemini-3.1-flash-image",
+      model: env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
       fetchImpl: fetch
     });
 
