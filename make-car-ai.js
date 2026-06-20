@@ -59,10 +59,7 @@ export const createCarAiImage = async ({
     body: JSON.stringify({
       contents: [{
         parts
-      }],
-      generationConfig: {
-        response_modalities: ["TEXT", "IMAGE"]
-      }
+      }]
     })
   });
 
