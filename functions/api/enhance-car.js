@@ -23,6 +23,7 @@ export async function onRequestPost({ request, env }) {
 
   const carName = String(payload.carName || "").trim();
   const profileSeed = String(payload.profileSeed || "");
+  const carImageUrl = String(payload.carImageUrl || "").trim();
 
   if (!carName) {
     return json({ error: "carName is required" }, 400);
@@ -33,6 +34,7 @@ export async function onRequestPost({ request, env }) {
       apiKey: env.GEMINI_API_KEY,
       carName,
       profileSeed,
+      sourceImageUrl: carImageUrl,
       model: env.GEMINI_IMAGE_MODEL || "gemini-3.1-flash-image",
       fetchImpl: fetch
     });

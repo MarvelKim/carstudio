@@ -1036,7 +1036,8 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             carName: selectedCar.name,
-            profileSeed: selectedProfileSeed
+            profileSeed: selectedProfileSeed,
+            carImageUrl: selectedCar.image
           })
         });
         const data = await response.json().catch(() => ({}));
@@ -1050,9 +1051,9 @@
         carImage.hidden = false;
       } catch (error) {
         showingEnhancedImage = false;
-        carImage.hidden = false;
-        carImage.src = selectedCar.image;
-        placeholder.hidden = true;
+        carImage.hidden = true;
+        placeholder.hidden = false;
+        placeholder.textContent = error.message || "AI 이미지 생성에 실패했습니다.";
         loadingIndicator.hidden = true;
         hintText.textContent = error.message || "AI 이미지 생성에 실패했습니다.";
         enhanceButton.disabled = false;
