@@ -1018,10 +1018,49 @@
       enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
     });
 
-    enhanceButton.addEventListener("click", () => {
+    async function generateEnhancedImage() {
       if (!selectedCar || !selectedProfileSeed) return;
-      openGeminiPromptModal();
-    });
+
+      enhanceButton.disabled = true;
+      enhanceButton.querySelector("span").textContent = "AI 이미지 생성 중";
+      showingEnhancedImage = true;
+      placeholder.hidden = true;
+      carImage.classList.remove("ready");
+      carImage.hidden = true;
+      loadingText.textContent = "AI 이미지 생성 중입니다.";
+      loadingIndicator.hidden = false;
+
+      try {
+        const response = await fetch("/api/enhance-car", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            carName: selectedCar.name,
+            profileSeed: selectedProfileSeed
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.imageUrl) {
+          throw new Error(data.error || "AI image generation failed");
+        }
+
+        carImage.alt = selectedCar.name + " AI generated vehicle image";
+        carImage.src = data.imageUrl;
+        carImage.hidden = false;
+      } catch (error) {
+        showingEnhancedImage = false;
+        carImage.hidden = false;
+        carImage.src = selectedCar.image;
+        placeholder.hidden = true;
+        loadingIndicator.hidden = true;
+        hintText.textContent = error.message || "AI 이미지 생성에 실패했습니다.";
+        enhanceButton.disabled = false;
+        enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+      }
+    }
+
+    enhanceButton.addEventListener("click", generateEnhancedImage);
 
     copyPromptButton.addEventListener("click", copyGeminiPrompt);
 
