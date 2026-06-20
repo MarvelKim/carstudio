@@ -41,6 +41,12 @@ export async function onRequestPost({ request, env }) {
 
     return json({ imageUrl: result.imageUrl });
   } catch (error) {
+    if (String(error.message || "").includes("Quota exceeded")) {
+      return json({
+        error: "현재 연결된 Gemini API 프로젝트의 이미지 생성 무료 한도가 0입니다. Google AI Studio에서 해당 API 키의 한도/결제 설정을 확인해야 합니다."
+      }, 502);
+    }
+
     return json({ error: error.message || "Gemini 이미지 생성에 실패했습니다." }, 502);
   }
 }
