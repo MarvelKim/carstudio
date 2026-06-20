@@ -24,8 +24,8 @@ const buildPrompt = (carName, profileSeed) => {
 };
 
 export async function onRequestPost({ request, env }) {
-  if (!env.OPENAI_API_KEY) {
-    return json({ error: "OpenAI API 키가 아직 연결되지 않았습니다." }, 500);
+  if (!env.GEMINI_API_KEY) {
+    return json({ error: "Gemini API 키가 아직 연결되지 않았습니다." }, 500);
   }
 
   let payload;
@@ -44,45 +44,38 @@ export async function onRequestPost({ request, env }) {
 
   const prompt = buildPrompt(carName, profileSeed);
   const seedHash = await hashText(`${carName}|${profileSeed}`);
-  const model = env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const model = env.GEMINI_IMAGE_MODEL || "gemini-3.1-flash-image";
 
   let response;
   try {
-    response = await fetch("https://api.openai.com/v1/images/generations", {
+    response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        "x-goog-api-key": env.GEMINI_API_KEY,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model,
-        prompt,
-        size: "1536x1024",
-        quality: "high",
-        output_format: "webp",
-        n: 1,
-        user: seedHash.slice(0, 64)
+        contents: [{
+          parts: [{ text: `${prompt}\nRequest id: ${seedHash.slice(0, 16)}` }]
+        }]
       })
     });
   } catch (error) {
-    return json({ error: "OpenAI image generation request failed" }, 502);
+    return json({ error: "Gemini 이미지 생성 요청에 연결하지 못했습니다." }, 502);
   }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    return json({ error: data.error?.message || "OpenAI image generation failed" }, response.status);
+    return json({ error: data.error?.message || "Gemini 이미지 생성에 실패했습니다." }, response.status);
   }
 
-  const image = data.data?.[0];
-  if (image?.url) {
-    return json({ imageUrl: image.url });
-  }
-
-  if (!image?.b64_json) {
-    return json({ error: "OpenAI response did not include an image" }, 502);
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const image = parts.find((part) => part.inlineData?.data);
+  if (!image?.inlineData?.data) {
+    return json({ error: "Gemini 응답에 이미지가 포함되지 않았습니다." }, 502);
   }
 
   return json({
-    imageUrl: `data:image/webp;base64,${image.b64_json}`
+    imageUrl: `data:${image.inlineData.mimeType || "image/png"};base64,${image.inlineData.data}`
   });
 }
