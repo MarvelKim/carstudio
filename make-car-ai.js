@@ -61,7 +61,7 @@ export const createCarAiImage = async ({
         parts
       }],
       generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"]
+        response_modalities: ["TEXT", "IMAGE"]
       }
     })
   });
