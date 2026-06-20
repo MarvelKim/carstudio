@@ -794,7 +794,7 @@
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.imageUrl) {
-        throw new Error(data.error || "AI image request failed");
+        throw new Error(data.error || "AI 이미지 생성 요청에 실패했습니다.");
       }
 
       return data.imageUrl;
@@ -896,7 +896,7 @@
       } catch (error) {
         showingEnhancedImage = false;
         loadingIndicator.hidden = true;
-        placeholder.textContent = "AI 이미지 생성에 실패했습니다. 잠시 뒤 다시 눌러주세요.";
+        placeholder.textContent = error.message || "AI 이미지 생성에 실패했습니다. 잠시 뒤 다시 눌러주세요.";
         placeholder.hidden = false;
         enhanceButton.disabled = false;
         enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";

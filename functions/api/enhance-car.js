@@ -25,7 +25,7 @@ const buildPrompt = (carName, profileSeed) => {
 
 export async function onRequestPost({ request, env }) {
   if (!env.OPENAI_API_KEY) {
-    return json({ error: "OPENAI_API_KEY is not configured" }, 500);
+    return json({ error: "OpenAI API 키가 아직 연결되지 않았습니다." }, 500);
   }
 
   let payload;
