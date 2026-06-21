@@ -9,6 +9,43 @@ const json = (body, status = 200) =>
     }
   });
 
+const defaultModels = ["gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+
+const getCandidateModels = (preferredModel) => {
+  const models = [preferredModel, ...defaultModels]
+    .map((model) => String(model || "").trim())
+    .filter(Boolean);
+  return [...new Set(models)];
+};
+
+const isRetryableGeminiModelError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return [
+    "quota",
+    "resource_exhausted",
+    "rate limit",
+    "not found",
+    "not supported",
+    "permission",
+    "response did not include an image"
+  ].some((term) => message.includes(term));
+};
+
+const userFacingGeminiError = (error) => {
+  const message = String(error?.message || "");
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes("quota") || lowerMessage.includes("resource_exhausted") || lowerMessage.includes("rate limit")) {
+    return "현재 연결된 Gemini API 키의 무료 이미지 생성 한도가 소진되었거나 제한되었습니다. 잠시 후 다시 시도하거나 Google AI Studio에서 해당 API 키의 한도/결제 설정을 확인해야 합니다.";
+  }
+
+  if (lowerMessage.includes("api key")) {
+    return "Gemini API 키가 아직 연결되지 않았습니다.";
+  }
+
+  return message || "Gemini 이미지 생성에 실패했습니다.";
+};
+
 export async function onRequestPost({ request, env }) {
   if (!env.GEMINI_API_KEY) {
     return json({ error: "Gemini API 키가 아직 연결되지 않았습니다." }, 500);
@@ -30,23 +67,31 @@ export async function onRequestPost({ request, env }) {
   }
 
   try {
-    const result = await createCarAiImage({
-      apiKey: env.GEMINI_API_KEY,
-      carName,
-      profileSeed,
-      sourceImageUrl: carImageUrl,
-      model: env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
-      fetchImpl: fetch
-    });
+    let lastError;
+    const models = getCandidateModels(env.GEMINI_IMAGE_MODEL);
 
-    return json({ imageUrl: result.imageUrl });
-  } catch (error) {
-    if (String(error.message || "").includes("Quota exceeded")) {
-      return json({
-        error: "현재 연결된 Gemini API 프로젝트의 이미지 생성 무료 한도가 0입니다. Google AI Studio에서 해당 API 키의 한도/결제 설정을 확인해야 합니다."
-      }, 502);
+    for (const model of models) {
+      try {
+        const result = await createCarAiImage({
+          apiKey: env.GEMINI_API_KEY,
+          carName,
+          profileSeed,
+          sourceImageUrl: carImageUrl,
+          model,
+          fetchImpl: fetch
+        });
+
+        return json({ imageUrl: result.imageUrl, model });
+      } catch (error) {
+        lastError = error;
+        if (!isRetryableGeminiModelError(error)) {
+          break;
+        }
+      }
     }
 
-    return json({ error: error.message || "Gemini 이미지 생성에 실패했습니다." }, 502);
+    throw lastError;
+  } catch (error) {
+    return json({ error: userFacingGeminiError(error) }, 502);
   }
 }
