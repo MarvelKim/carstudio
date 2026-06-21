@@ -1,4 +1,4 @@
-import { createCarAiImage } from "../../make-car-ai.js";
+import { createCarAiImage, createFreeFallbackCarImage } from "../../make-car-ai.js";
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -9,7 +9,7 @@ const json = (body, status = 200) =>
     }
   });
 
-const defaultModels = ["gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+const defaultModels = ["gemini-3.1-flash-image", "gemini-3-pro-image", "gemini-2.5-flash-image"];
 
 const getCandidateModels = (preferredModel) => {
   const models = [preferredModel, ...defaultModels]
@@ -47,10 +47,6 @@ const userFacingGeminiError = (error) => {
 };
 
 export async function onRequestPost({ request, env }) {
-  if (!env.GEMINI_API_KEY) {
-    return json({ error: "Gemini API 키가 아직 연결되지 않았습니다." }, 500);
-  }
-
   let payload;
   try {
     payload = await request.json();
@@ -70,27 +66,39 @@ export async function onRequestPost({ request, env }) {
     let lastError;
     const models = getCandidateModels(env.GEMINI_IMAGE_MODEL);
 
-    for (const model of models) {
-      try {
-        const result = await createCarAiImage({
-          apiKey: env.GEMINI_API_KEY,
-          carName,
-          profileSeed,
-          sourceImageUrl: carImageUrl,
-          model,
-          fetchImpl: fetch
-        });
+    if (env.GEMINI_API_KEY) {
+      for (const model of models) {
+        try {
+          const result = await createCarAiImage({
+            apiKey: env.GEMINI_API_KEY,
+            carName,
+            profileSeed,
+            sourceImageUrl: carImageUrl,
+            model,
+            fetchImpl: fetch
+          });
 
-        return json({ imageUrl: result.imageUrl, model });
-      } catch (error) {
-        lastError = error;
-        if (!isRetryableGeminiModelError(error)) {
-          break;
+          return json({ imageUrl: result.imageUrl, model, provider: "gemini" });
+        } catch (error) {
+          lastError = error;
+          if (!isRetryableGeminiModelError(error)) {
+            break;
+          }
         }
       }
     }
 
-    throw lastError;
+    if (env.DISABLE_FREE_IMAGE_FALLBACK !== "true") {
+      const result = await createFreeFallbackCarImage({
+        carName,
+        profileSeed,
+        fetchImpl: fetch
+      });
+
+      return json({ imageUrl: result.imageUrl, model: "pollinations-flux", provider: "pollinations" });
+    }
+
+    throw lastError || new Error("Gemini API 키가 아직 연결되지 않았습니다.");
   } catch (error) {
     return json({ error: userFacingGeminiError(error) }, 502);
   }

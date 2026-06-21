@@ -9,6 +9,33 @@ export const buildCarImagePrompt = (carName, profileSeed = "") => {
   ].join(" ");
 };
 
+const buildFallbackPrompt = (carName, profileSeed = "") => {
+  const futureOffset = 20 + (Math.abs(String(profileSeed).length) % 11);
+  return [
+    `A cinematic hyper-realistic automotive concept render of a future ${carName}, ${futureOffset} years from now.`,
+    "Full vehicle visible, premium futuristic redesign, dramatic studio lighting, glossy reflections, 3/4 front view, realistic wheels, sharp body surfacing, luxury material finish.",
+    "Clean dark studio background, professional car commercial photography, no people, no text, no watermark, no distorted wheels, no random logos."
+  ].join(" ");
+};
+
+const hashText = (value) => {
+  let hash = 2166136261;
+  for (const char of String(value)) {
+    hash ^= char.codePointAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
+const bytesToBase64 = (bytes) => {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+};
+
 const imageUrlToInlineData = async (imageUrl, fetchImpl) => {
   if (!imageUrl) return null;
 
@@ -19,16 +46,41 @@ const imageUrlToInlineData = async (imageUrl, fetchImpl) => {
 
   const contentType = response.headers.get("content-type") || "image/webp";
   const buffer = await response.arrayBuffer();
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  for (let index = 0; index < bytes.length; index += 1) {
-    binary += String.fromCharCode(bytes[index]);
-  }
 
   return {
     mimeType: contentType.split(";")[0],
-    data: btoa(binary)
+    data: bytesToBase64(new Uint8Array(buffer))
   };
+};
+
+const buildGeminiGenerationConfig = (model) => {
+  const image = { aspectRatio: "16:9" };
+  if (model === "gemini-3.1-flash-image" || model === "gemini-3-pro-image") {
+    image.imageSize = "1K";
+  }
+
+  return {
+    responseModalities: ["TEXT", "IMAGE"],
+    responseFormat: { image }
+  };
+};
+
+const normalizeGeminiPart = (part) => {
+  if (part.text) return { text: part.text };
+  const inlineData = part.inlineData || part.inline_data;
+  if (!inlineData) return part;
+
+  return {
+    inline_data: {
+      mime_type: inlineData.mimeType || inlineData.mime_type || "image/png",
+      data: inlineData.data
+    }
+  };
+};
+
+const findInlineImage = (data) => {
+  const responseParts = data.candidates?.[0]?.content?.parts || [];
+  return responseParts.find((part) => part.inlineData?.data || part.inline_data?.data);
 };
 
 export const createCarAiImage = async ({
@@ -47,7 +99,12 @@ export const createCarAiImage = async ({
   const sourceImage = await imageUrlToInlineData(sourceImageUrl, fetchImpl);
   const parts = [{ text: prompt }];
   if (sourceImage) {
-    parts.push({ inlineData: sourceImage });
+    parts.push({
+      inline_data: {
+        mime_type: sourceImage.mimeType,
+        data: sourceImage.data
+      }
+    });
   }
 
   const response = await fetchImpl(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
@@ -58,11 +115,9 @@ export const createCarAiImage = async ({
     },
     body: JSON.stringify({
       contents: [{
-        parts
+        parts: parts.map(normalizeGeminiPart)
       }],
-      generationConfig: {
-        responseModalities: ["Image"]
-      }
+      generationConfig: buildGeminiGenerationConfig(model)
     })
   });
 
@@ -71,14 +126,48 @@ export const createCarAiImage = async ({
     throw new Error(data.error?.message || "Gemini image generation failed");
   }
 
-  const responseParts = data.candidates?.[0]?.content?.parts || [];
-  const image = responseParts.find((part) => part.inlineData?.data);
-  if (!image?.inlineData?.data) {
+  const image = findInlineImage(data);
+  const inlineData = image?.inlineData || image?.inline_data;
+  if (!inlineData?.data) {
     throw new Error("Gemini response did not include an image");
   }
 
   return {
-    imageUrl: `data:${image.inlineData.mimeType || "image/png"};base64,${image.inlineData.data}`,
+    imageUrl: `data:${inlineData.mimeType || inlineData.mime_type || "image/png"};base64,${inlineData.data}`,
+    prompt
+  };
+};
+
+export const createFreeFallbackCarImage = async ({
+  carName,
+  profileSeed = "",
+  fetchImpl = fetch
+}) => {
+  const prompt = buildFallbackPrompt(carName, profileSeed);
+  const seed = hashText(`${carName}|${profileSeed}`);
+  const imageUrl = new URL(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`);
+  imageUrl.searchParams.set("width", "1344");
+  imageUrl.searchParams.set("height", "768");
+  imageUrl.searchParams.set("seed", String(seed));
+  imageUrl.searchParams.set("model", "flux");
+  imageUrl.searchParams.set("nologo", "true");
+  imageUrl.searchParams.set("enhance", "true");
+
+  const response = await fetchImpl(imageUrl.toString(), {
+    headers: {
+      "Accept": "image/png,image/jpeg,image/webp"
+    }
+  });
+  if (!response.ok) {
+    throw new Error("Free image fallback failed");
+  }
+
+  const contentType = response.headers.get("content-type") || "image/jpeg";
+  const buffer = await response.arrayBuffer();
+  const data = bytesToBase64(new Uint8Array(buffer));
+
+  return {
+    imageUrl: `data:${contentType.split(";")[0]};base64,${data}`,
     prompt
   };
 };
