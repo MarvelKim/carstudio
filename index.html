@@ -378,19 +378,19 @@
 
     .image-frame {
       width: min(100%, 590px);
-      min-height: 300px;
+      aspect-ratio: 16 / 10;
+      min-height: 0;
       display: grid;
       place-items: center;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--frame-bg);
-      overflow: visible;
+      overflow: hidden;
     }
 
     .image-frame img {
       width: 100%;
-      height: auto;
-      max-height: min(58vh, 520px);
+      height: 100%;
       object-fit: contain;
       padding: 16px;
       opacity: 0;

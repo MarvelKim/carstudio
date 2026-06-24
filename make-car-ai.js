@@ -4,7 +4,8 @@ export const buildCarImagePrompt = (carName, profileSeed = "") => {
     `Using the reference vehicle image, create a clearly new AI concept render of the ${carName} as it could look ${futureOffset} to ${futureOffset + 2} years in the future.`,
     "Do not copy or reproduce the reference image. Keep only the broad vehicle class and brand character, then visibly redesign the body panels, lighting signature, wheels, stance, front fascia, rear haunches, material finish, and studio setting.",
     "Make the result obviously different from the source at first glance: more premium, futuristic, dramatic, and custom-built, while still plausible as an automotive design.",
-    "Use a natural 3:2 landscape composition with the full vehicle visible, realistic perspective, balanced reflections, premium materials, sharp but not overprocessed details, and soft studio lighting.",
+    "Use a natural 16:10 landscape composition with the full vehicle visible, realistic perspective, balanced reflections, premium materials, sharp but not overprocessed details, and soft studio lighting.",
+    "Preserve believable automotive proportions: normal vehicle height, round wheels, natural cabin height, and no vertically compressed or flattened body shape.",
     "Avoid text, labels, people, watermarks, stretched proportions, warped wheels, and random logos."
   ].join(" ");
 };
@@ -14,6 +15,7 @@ const buildFallbackPrompt = (carName, profileSeed = "") => {
   return [
     `A cinematic hyper-realistic automotive concept render of a future ${carName}, ${futureOffset} years from now.`,
     "Full vehicle visible, premium futuristic redesign, dramatic studio lighting, glossy reflections, 3/4 front view, realistic wheels, sharp body surfacing, luxury material finish.",
+    "Natural 16:10 landscape car studio composition, normal vehicle height, round wheels, believable cabin height, not vertically squeezed, not flattened, not stretched.",
     "Clean dark studio background, professional car commercial photography, no people, no text, no watermark, no distorted wheels, no random logos."
   ].join(" ");
 };
@@ -146,8 +148,8 @@ export const createFreeFallbackCarImage = async ({
   const prompt = buildFallbackPrompt(carName, profileSeed);
   const seed = hashText(`${carName}|${profileSeed}`);
   const imageUrl = new URL(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`);
-  imageUrl.searchParams.set("width", "1344");
-  imageUrl.searchParams.set("height", "768");
+  imageUrl.searchParams.set("width", "1280");
+  imageUrl.searchParams.set("height", "800");
   imageUrl.searchParams.set("seed", String(seed));
   imageUrl.searchParams.set("model", "flux");
   imageUrl.searchParams.set("nologo", "true");
