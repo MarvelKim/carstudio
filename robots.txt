@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://carstudio-dye.pages.dev/sitemap.xml

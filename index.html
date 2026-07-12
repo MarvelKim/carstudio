@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="이름과 기본 정보를 바탕으로 수백 종의 자동차 중 나만의 차량을 추천하고, 미래형 AI 자동차 이미지까지 즐길 수 있는 Car Studio입니다.">
+  <link rel="canonical" href="https://carstudio-dye.pages.dev/">
   <meta name="google-adsense-account" content="ca-pub-6245620451206389">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6245620451206389" crossorigin="anonymous"></script>
   <title>Car Studio Random Picker</title>
@@ -112,6 +114,24 @@
       align-items: center;
       gap: 12px;
     }
+
+    .info-link {
+      display: inline-grid;
+      place-items: center;
+      height: 32px;
+      border: 1px solid var(--field-border);
+      border-radius: 6px;
+      padding: 0 10px;
+      background: var(--field-bg);
+      color: var(--field-text);
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .info-link:hover { border-color: var(--accent); color: var(--accent); }
+    .info-link:focus-visible { outline: 3px solid rgba(106, 161, 255, 0.42); outline-offset: 3px; }
 
     .language-select {
       width: auto;
@@ -607,7 +627,10 @@
       main { padding: 0; }
       .shell { grid-template-columns: 1fr; min-height: 100vh; border: 0; border-radius: 0; }
       .control { padding: 26px 18px; }
-      .brand { margin-bottom: 28px; }
+      .brand { gap: 8px; margin-bottom: 28px; }
+      .brand-actions { gap: 6px; }
+      .language-select { min-width: 78px; }
+      .info-link { padding-inline: 7px; }
       .profile-row,
       .input-row { grid-template-columns: 1fr; }
       .birthdate-row {
@@ -639,6 +662,7 @@
           <div class="brand">
             <strong>Car Studio</strong>
             <div class="brand-actions">
+              <a class="info-link" href="/about.html" target="_blank" rel="noopener" aria-label="Car Studio 서비스 안내 새 창에서 보기">안내</a>
               <select class="language-select" id="languageSelect" aria-label="언어 선택"></select>
               <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" data-theme="light">
                 <span class="theme-sun" aria-hidden="true"></span>
