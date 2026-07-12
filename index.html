@@ -631,57 +631,53 @@
 </head>
 <body>
   <main>
-    <section class="shell" aria-label="랜덤 차량 추천기">
+    <section class="shell" id="appShell" aria-label="랜덤 차량 추천기">
       <div class="control">
         <div>
           <div class="brand">
             <strong>Car Studio</strong>
             <div class="brand-actions">
-              <select class="language-select" id="languageSelect" aria-label="언어 선택">
-                <option value="ko">한국어</option>
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
-              </select>
+              <select class="language-select" id="languageSelect" aria-label="언어 선택"></select>
               <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" data-theme="light">
                 <span class="theme-sun" aria-hidden="true"></span>
               </button>
             </div>
           </div>
-          <h1>생애 한 번뿐인<br><span class="mobile-join"> </span>랜덤 자동차</h1>
-          <p class="lead">같은 이름은 같은 차량으로 다시 연결됩니다.</p>
+          <h1 id="heroTitle">생애 한 번뿐인<br><span class="mobile-join"> </span>랜덤 자동차</h1>
+          <p class="lead" id="heroLead">같은 이름은 같은 차량으로 다시 연결됩니다.</p>
           <form id="pickerForm">
             <div class="profile-row">
-              <label for="genderSelect">성별
+              <label for="genderSelect"><span id="genderLabel">성별</span>
                 <select id="genderSelect" required>
-                  <option value="">선택</option>
-                  <option value="male">남자</option>
-                  <option value="female">여자</option>
+                  <option id="genderEmpty" value="">선택</option>
+                  <option id="genderMale" value="male">남자</option>
+                  <option id="genderFemale" value="female">여자</option>
                 </select>
               </label>
               <div class="birthdate-row">
-                <label for="birthYearSelect">출생연도
+                <label for="birthYearSelect"><span id="birthYearLabel">출생연도</span>
                   <select id="birthYearSelect" required>
-                    <option value="">선택</option>
+                    <option id="birthYearEmpty" value="">선택</option>
                   </select>
                 </label>
-                <label for="birthMonthSelect">월
+                <label for="birthMonthSelect"><span id="birthMonthLabel">월</span>
                   <select id="birthMonthSelect" required>
-                    <option value="">선택</option>
+                    <option id="birthMonthEmpty" value="">선택</option>
                   </select>
                 </label>
-                <label for="birthDaySelect">일
+                <label for="birthDaySelect"><span id="birthDayLabel">일</span>
                   <select id="birthDaySelect" required>
-                    <option value="">선택</option>
+                    <option id="birthDayEmpty" value="">선택</option>
                   </select>
                 </label>
               </div>
             </div>
-            <label for="seedInput">이름
+            <label for="seedInput"><span id="nameLabel">이름</span>
               <div class="input-row">
                 <input id="seedInput" type="text" autocomplete="off" placeholder="예: 홍길동, car2026, 85A" required>
                 <button class="shuffle" type="submit" aria-label="차량 뽑기">
                   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
-                  <span>차량 뽑기</span>
+                  <span id="pickButtonText">차량 뽑기</span>
                 </button>
               </div>
             </label>
@@ -704,7 +700,7 @@
           </div>
           <div class="details">
             <div>
-              <p class="eyebrow">추천 차량</p>
+              <p class="eyebrow" id="recommendedLabel">추천 차량</p>
               <h2 class="car-name" id="carName">아직 선택되지 않음</h2>
             </div>
             <button class="enhance-button" id="enhanceButton" type="button" hidden>
@@ -787,13 +783,104 @@
 
     localStorage.removeItem(storageKey);
     historyList.innerHTML = "";
-    const languageNames = { ko: "한국어", en: "English", ja: "日本語" };
+    const languageNames = {
+      ko: "한국어", en: "English", ja: "日本語", "zh-CN": "简体中文", "zh-TW": "繁體中文",
+      es: "Español", fr: "Français", de: "Deutsch", "pt-BR": "Português (Brasil)", pt: "Português",
+      ru: "Русский", it: "Italiano", nl: "Nederlands", pl: "Polski", tr: "Türkçe", ar: "العربية",
+      hi: "हिन्दी", id: "Bahasa Indonesia", vi: "Tiếng Việt", th: "ไทย", sv: "Svenska", no: "Norsk",
+      da: "Dansk", fi: "Suomi", cs: "Čeština", ro: "Română", hu: "Magyar", el: "Ελληνικά",
+      he: "עברית", uk: "Українська", bg: "Български", hr: "Hrvatski", sk: "Slovenčina",
+      sl: "Slovenščina", sr: "Српски", ms: "Bahasa Melayu", fil: "Filipino", fa: "فارسی",
+      bn: "বাংলা", sw: "Kiswahili"
+    };
+    const translationKeys = ["title", "lead", "gender", "select", "male", "female", "birthYear", "month", "day", "name", "placeholder", "pick", "imagePlaceholder", "recommended", "notSelected", "enhance", "required", "stable", "loading", "imageError", "languageLabel"];
+    const translationRows = {
+      ko: ["생애 한 번뿐인 랜덤 자동차", "같은 이름은 같은 차량으로 다시 연결됩니다.", "성별", "선택", "남자", "여자", "출생연도", "월", "일", "이름", "예: 홍길동, car2026, 85A", "차량 뽑기", "이름을 입력하면 차량 사진이 표시됩니다.", "추천 차량", "아직 선택되지 않음", "AI로 더 멋지게 만들기", "모든 항목을 먼저 입력해주세요.", "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.", "AI 이미지 생성 중입니다.", "차량 이미지를 불러오지 못했습니다.", "언어 선택"],
+      en: ["Your Once-in-a-Lifetime Random Car", "The same details always lead to the same car.", "Gender", "Select", "Male", "Female", "Birth year", "Month", "Day", "Name", "e.g. Alex, car2026, 85A", "Pick a car", "Enter your name to see a car.", "Recommended car", "Not selected yet", "Enhance with AI", "Please complete all fields first.", "The same gender, birth date, and name always lead to the same car.", "Generating AI image.", "Unable to load the car image.", "Select language"],
+      ja: ["一生に一度のランダムカー", "同じ情報なら、いつも同じ車につながります。", "性別", "選択", "男性", "女性", "生年", "月", "日", "名前", "例：太郎、car2026、85A", "車を選ぶ", "名前を入力すると車の画像が表示されます。", "おすすめの車", "まだ選択されていません", "AIでもっと魅力的に", "先にすべての項目を入力してください。", "同じ性別、生年月日、名前は常に同じ車につながります。", "AI画像を生成中です。", "車の画像を読み込めませんでした。", "言語を選択"],
+      "zh-CN": ["一生一次的随机汽车", "相同信息始终会匹配同一辆车。", "性别", "选择", "男", "女", "出生年份", "月", "日", "姓名", "例如：小明、car2026、85A", "抽取汽车", "输入姓名后将显示汽车图片。", "推荐汽车", "尚未选择", "使用 AI 优化", "请先填写所有项目。", "相同的性别、出生日期和姓名始终匹配同一辆车。", "正在生成 AI 图片。", "无法加载汽车图片。", "选择语言"],
+      "zh-TW": ["一生一次的隨機汽車", "相同資料永遠會配對同一輛車。", "性別", "選擇", "男", "女", "出生年份", "月", "日", "姓名", "例如：小明、car2026、85A", "抽取汽車", "輸入姓名後將顯示汽車圖片。", "推薦汽車", "尚未選擇", "使用 AI 優化", "請先填寫所有項目。", "相同的性別、出生日期和姓名永遠配對同一輛車。", "正在產生 AI 圖片。", "無法載入汽車圖片。", "選擇語言"],
+      es: ["Tu coche aleatorio de una vez en la vida", "Los mismos datos siempre llevan al mismo coche.", "Género", "Seleccionar", "Hombre", "Mujer", "Año de nacimiento", "Mes", "Día", "Nombre", "Ej.: Alex, car2026, 85A", "Elegir coche", "Introduce tu nombre para ver un coche.", "Coche recomendado", "Aún sin seleccionar", "Mejorar con IA", "Completa primero todos los campos.", "El mismo género, fecha de nacimiento y nombre siempre llevan al mismo coche.", "Generando imagen con IA.", "No se pudo cargar la imagen del coche.", "Seleccionar idioma"],
+      fr: ["Votre voiture aléatoire unique", "Les mêmes informations donnent toujours la même voiture.", "Genre", "Sélectionner", "Homme", "Femme", "Année de naissance", "Mois", "Jour", "Nom", "Ex. : Alex, car2026, 85A", "Choisir une voiture", "Saisissez votre nom pour afficher une voiture.", "Voiture recommandée", "Pas encore sélectionnée", "Améliorer avec l’IA", "Veuillez d’abord remplir tous les champs.", "Le même genre, la même date de naissance et le même nom donnent toujours la même voiture.", "Génération de l’image IA.", "Impossible de charger l’image de la voiture.", "Choisir la langue"],
+      de: ["Dein einmaliges Zufallsauto", "Gleiche Angaben führen immer zum gleichen Auto.", "Geschlecht", "Auswählen", "Männlich", "Weiblich", "Geburtsjahr", "Monat", "Tag", "Name", "z. B. Alex, car2026, 85A", "Auto auswählen", "Gib deinen Namen ein, um ein Auto zu sehen.", "Empfohlenes Auto", "Noch nicht ausgewählt", "Mit KI verbessern", "Bitte zuerst alle Felder ausfüllen.", "Gleiches Geschlecht, Geburtsdatum und Name führen immer zum gleichen Auto.", "KI-Bild wird erstellt.", "Das Fahrzeugbild konnte nicht geladen werden.", "Sprache auswählen"],
+      "pt-BR": ["Seu carro aleatório para a vida", "Os mesmos dados sempre levam ao mesmo carro.", "Gênero", "Selecionar", "Masculino", "Feminino", "Ano de nascimento", "Mês", "Dia", "Nome", "Ex.: Alex, car2026, 85A", "Sortear carro", "Digite seu nome para ver um carro.", "Carro recomendado", "Ainda não selecionado", "Melhorar com IA", "Preencha todos os campos primeiro.", "O mesmo gênero, data de nascimento e nome sempre levam ao mesmo carro.", "Gerando imagem com IA.", "Não foi possível carregar a imagem do carro.", "Selecionar idioma"],
+      pt: ["O seu carro aleatório único", "Os mesmos dados levam sempre ao mesmo carro.", "Género", "Selecionar", "Masculino", "Feminino", "Ano de nascimento", "Mês", "Dia", "Nome", "Ex.: Alex, car2026, 85A", "Escolher carro", "Introduza o nome para ver um carro.", "Carro recomendado", "Ainda não selecionado", "Melhorar com IA", "Preencha primeiro todos os campos.", "O mesmo género, data de nascimento e nome levam sempre ao mesmo carro.", "A gerar imagem com IA.", "Não foi possível carregar a imagem do carro.", "Selecionar idioma"],
+      ru: ["Ваш случайный автомобиль на всю жизнь", "Одинаковые данные всегда дают один и тот же автомобиль.", "Пол", "Выбрать", "Мужской", "Женский", "Год рождения", "Месяц", "День", "Имя", "Напр.: Алекс, car2026, 85A", "Выбрать автомобиль", "Введите имя, чтобы увидеть автомобиль.", "Рекомендуемый автомобиль", "Ещё не выбран", "Улучшить с помощью ИИ", "Сначала заполните все поля.", "Одинаковые пол, дата рождения и имя всегда дают один автомобиль.", "Создание изображения ИИ.", "Не удалось загрузить изображение автомобиля.", "Выбрать язык"],
+      it: ["La tua auto casuale per la vita", "Gli stessi dati portano sempre alla stessa auto.", "Genere", "Seleziona", "Uomo", "Donna", "Anno di nascita", "Mese", "Giorno", "Nome", "Es.: Alex, car2026, 85A", "Scegli un’auto", "Inserisci il nome per vedere un’auto.", "Auto consigliata", "Non ancora selezionata", "Migliora con l’IA", "Compila prima tutti i campi.", "Stesso genere, data di nascita e nome portano sempre alla stessa auto.", "Generazione immagine IA.", "Impossibile caricare l’immagine dell’auto.", "Seleziona lingua"],
+      nl: ["Jouw unieke willekeurige auto", "Dezelfde gegevens leiden altijd naar dezelfde auto.", "Geslacht", "Selecteren", "Man", "Vrouw", "Geboortejaar", "Maand", "Dag", "Naam", "Bijv. Alex, car2026, 85A", "Kies een auto", "Vul je naam in om een auto te zien.", "Aanbevolen auto", "Nog niet geselecteerd", "Verbeteren met AI", "Vul eerst alle velden in.", "Hetzelfde geslacht, geboortedatum en naam leiden altijd naar dezelfde auto.", "AI-afbeelding wordt gemaakt.", "De autoafbeelding kon niet worden geladen.", "Taal selecteren"],
+      pl: ["Twój jedyny losowy samochód", "Te same dane zawsze prowadzą do tego samego auta.", "Płeć", "Wybierz", "Mężczyzna", "Kobieta", "Rok urodzenia", "Miesiąc", "Dzień", "Imię", "Np. Alex, car2026, 85A", "Wylosuj auto", "Wpisz imię, aby zobaczyć auto.", "Polecany samochód", "Jeszcze nie wybrano", "Ulepsz za pomocą AI", "Najpierw wypełnij wszystkie pola.", "Ta sama płeć, data urodzenia i imię zawsze prowadzą do tego samego auta.", "Tworzenie obrazu AI.", "Nie udało się wczytać obrazu samochodu.", "Wybierz język"],
+      tr: ["Hayatındaki rastgele araban", "Aynı bilgiler her zaman aynı arabayı verir.", "Cinsiyet", "Seç", "Erkek", "Kadın", "Doğum yılı", "Ay", "Gün", "Ad", "Örn. Alex, car2026, 85A", "Araba seç", "Bir araba görmek için adınızı girin.", "Önerilen araba", "Henüz seçilmedi", "Yapay zekâ ile geliştir", "Önce tüm alanları doldurun.", "Aynı cinsiyet, doğum tarihi ve ad her zaman aynı arabayı verir.", "Yapay zekâ görseli oluşturuluyor.", "Araba görseli yüklenemedi.", "Dil seçin"],
+      ar: ["سيارتك العشوائية لمدى الحياة", "المعلومات نفسها تؤدي دائماً إلى السيارة نفسها.", "الجنس", "اختر", "ذكر", "أنثى", "سنة الميلاد", "الشهر", "اليوم", "الاسم", "مثال: Alex, car2026, 85A", "اختر سيارة", "أدخل اسمك لعرض سيارة.", "السيارة المقترحة", "لم يتم الاختيار بعد", "تحسين بالذكاء الاصطناعي", "يرجى إكمال جميع الحقول أولاً.", "الجنس وتاريخ الميلاد والاسم نفسها تؤدي دائماً إلى السيارة نفسها.", "جارٍ إنشاء صورة بالذكاء الاصطناعي.", "تعذر تحميل صورة السيارة.", "اختر اللغة"],
+      hi: ["आपकी जीवनभर की रैंडम कार", "समान जानकारी हमेशा समान कार देती है।", "लिंग", "चुनें", "पुरुष", "महिला", "जन्म वर्ष", "महीना", "दिन", "नाम", "उदा. Alex, car2026, 85A", "कार चुनें", "कार देखने के लिए नाम दर्ज करें।", "सुझाई गई कार", "अभी चयन नहीं हुआ", "AI से बेहतर बनाएँ", "पहले सभी फ़ील्ड भरें।", "समान लिंग, जन्म तिथि और नाम हमेशा समान कार देते हैं।", "AI चित्र बनाया जा रहा है।", "कार का चित्र लोड नहीं हुआ।", "भाषा चुनें"],
+      id: ["Mobil acak sekali seumur hidup", "Data yang sama selalu menghasilkan mobil yang sama.", "Jenis kelamin", "Pilih", "Pria", "Wanita", "Tahun lahir", "Bulan", "Hari", "Nama", "Contoh: Alex, car2026, 85A", "Pilih mobil", "Masukkan nama untuk melihat mobil.", "Mobil rekomendasi", "Belum dipilih", "Tingkatkan dengan AI", "Lengkapi semua kolom terlebih dahulu.", "Jenis kelamin, tanggal lahir, dan nama yang sama selalu menghasilkan mobil yang sama.", "Membuat gambar AI.", "Gambar mobil tidak dapat dimuat.", "Pilih bahasa"],
+      vi: ["Chiếc xe ngẫu nhiên của đời bạn", "Thông tin giống nhau luôn cho cùng một chiếc xe.", "Giới tính", "Chọn", "Nam", "Nữ", "Năm sinh", "Tháng", "Ngày", "Tên", "Ví dụ: Alex, car2026, 85A", "Chọn xe", "Nhập tên để xem xe.", "Xe được đề xuất", "Chưa chọn", "Nâng cấp bằng AI", "Vui lòng điền tất cả các mục trước.", "Cùng giới tính, ngày sinh và tên luôn cho cùng một chiếc xe.", "Đang tạo ảnh AI.", "Không thể tải ảnh xe.", "Chọn ngôn ngữ"],
+      th: ["รถสุ่มหนึ่งเดียวในชีวิต", "ข้อมูลเดียวกันจะได้รถคันเดิมเสมอ", "เพศ", "เลือก", "ชาย", "หญิง", "ปีเกิด", "เดือน", "วัน", "ชื่อ", "เช่น Alex, car2026, 85A", "สุ่มรถ", "กรอกชื่อเพื่อดูรถ", "รถที่แนะนำ", "ยังไม่ได้เลือก", "ปรับแต่งด้วย AI", "กรุณากรอกทุกช่องก่อน", "เพศ วันเกิด และชื่อเดียวกันจะได้รถคันเดิมเสมอ", "กำลังสร้างภาพ AI", "ไม่สามารถโหลดภาพรถได้", "เลือกภาษา"],
+      sv: ["Din unika slumpbil", "Samma uppgifter leder alltid till samma bil.", "Kön", "Välj", "Man", "Kvinna", "Födelseår", "Månad", "Dag", "Namn", "T.ex. Alex, car2026, 85A", "Välj bil", "Ange ditt namn för att se en bil.", "Rekommenderad bil", "Inte vald ännu", "Förbättra med AI", "Fyll i alla fält först.", "Samma kön, födelsedatum och namn leder alltid till samma bil.", "Skapar AI-bild.", "Kunde inte läsa in bilbilden.", "Välj språk"],
+      no: ["Din unike tilfeldige bil", "Samme opplysninger gir alltid samme bil.", "Kjønn", "Velg", "Mann", "Kvinne", "Fødselsår", "Måned", "Dag", "Navn", "F.eks. Alex, car2026, 85A", "Velg bil", "Skriv inn navnet for å se en bil.", "Anbefalt bil", "Ikke valgt ennå", "Forbedre med KI", "Fyll ut alle feltene først.", "Samme kjønn, fødselsdato og navn gir alltid samme bil.", "Lager KI-bilde.", "Kunne ikke laste bilbildet.", "Velg språk"],
+      da: ["Din unikke tilfældige bil", "De samme oplysninger giver altid den samme bil.", "Køn", "Vælg", "Mand", "Kvinde", "Fødselsår", "Måned", "Dag", "Navn", "F.eks. Alex, car2026, 85A", "Vælg bil", "Indtast dit navn for at se en bil.", "Anbefalet bil", "Ikke valgt endnu", "Forbedr med AI", "Udfyld først alle felter.", "Samme køn, fødselsdato og navn giver altid samme bil.", "Opretter AI-billede.", "Bilbilledet kunne ikke indlæses.", "Vælg sprog"],
+      fi: ["Ainutkertainen satunnaisautosi", "Samat tiedot johtavat aina samaan autoon.", "Sukupuoli", "Valitse", "Mies", "Nainen", "Syntymävuosi", "Kuukausi", "Päivä", "Nimi", "Esim. Alex, car2026, 85A", "Valitse auto", "Kirjoita nimesi nähdäksesi auton.", "Suositeltu auto", "Ei vielä valittu", "Paranna tekoälyllä", "Täytä ensin kaikki kentät.", "Sama sukupuoli, syntymäaika ja nimi johtavat aina samaan autoon.", "Luodaan tekoälykuvaa.", "Auton kuvaa ei voitu ladata.", "Valitse kieli"],
+      cs: ["Vaše jedinečné náhodné auto", "Stejné údaje vždy vedou ke stejnému autu.", "Pohlaví", "Vybrat", "Muž", "Žena", "Rok narození", "Měsíc", "Den", "Jméno", "Např. Alex, car2026, 85A", "Vybrat auto", "Zadejte jméno a zobrazí se auto.", "Doporučené auto", "Zatím nevybráno", "Vylepšit pomocí AI", "Nejprve vyplňte všechna pole.", "Stejné pohlaví, datum narození a jméno vždy vedou ke stejnému autu.", "Vytváří se obrázek AI.", "Obrázek auta nelze načíst.", "Vybrat jazyk"],
+      ro: ["Mașina ta aleatorie unică", "Aceleași date duc mereu la aceeași mașină.", "Gen", "Selectează", "Bărbat", "Femeie", "Anul nașterii", "Luna", "Ziua", "Nume", "Ex.: Alex, car2026, 85A", "Alege mașina", "Introdu numele pentru a vedea o mașină.", "Mașină recomandată", "Încă neselectată", "Îmbunătățește cu AI", "Completează mai întâi toate câmpurile.", "Același gen, data nașterii și nume duc mereu la aceeași mașină.", "Se generează imaginea AI.", "Imaginea mașinii nu a putut fi încărcată.", "Selectează limba"],
+      hu: ["Az életre szóló véletlen autód", "Ugyanazok az adatok mindig ugyanahhoz az autóhoz vezetnek.", "Nem", "Válassz", "Férfi", "Nő", "Születési év", "Hónap", "Nap", "Név", "Pl. Alex, car2026, 85A", "Autó választása", "Írd be a neved egy autó megtekintéséhez.", "Ajánlott autó", "Még nincs kiválasztva", "Javítás MI-vel", "Először tölts ki minden mezőt.", "Ugyanaz a nem, születési dátum és név mindig ugyanazt az autót adja.", "MI-kép készítése.", "Az autó képe nem tölthető be.", "Nyelv kiválasztása"],
+      el: ["Το μοναδικό τυχαίο αυτοκίνητό σας", "Τα ίδια στοιχεία οδηγούν πάντα στο ίδιο αυτοκίνητο.", "Φύλο", "Επιλογή", "Άνδρας", "Γυναίκα", "Έτος γέννησης", "Μήνας", "Ημέρα", "Όνομα", "π.χ. Alex, car2026, 85A", "Επιλογή αυτοκινήτου", "Εισαγάγετε όνομα για να δείτε ένα αυτοκίνητο.", "Προτεινόμενο αυτοκίνητο", "Δεν έχει επιλεγεί", "Βελτίωση με AI", "Συμπληρώστε πρώτα όλα τα πεδία.", "Το ίδιο φύλο, ημερομηνία γέννησης και όνομα οδηγούν πάντα στο ίδιο αυτοκίνητο.", "Δημιουργία εικόνας AI.", "Δεν ήταν δυνατή η φόρτωση της εικόνας.", "Επιλογή γλώσσας"],
+      he: ["המכונית האקראית שלך לכל החיים", "אותם פרטים תמיד מובילים לאותה מכונית.", "מגדר", "בחירה", "זכר", "נקבה", "שנת לידה", "חודש", "יום", "שם", "לדוגמה: Alex, car2026, 85A", "בחירת מכונית", "הזינו שם כדי לראות מכונית.", "מכונית מומלצת", "טרם נבחרה", "שיפור באמצעות AI", "יש למלא תחילה את כל השדות.", "אותם מגדר, תאריך לידה ושם תמיד מובילים לאותה מכונית.", "יוצר תמונת AI.", "לא ניתן לטעון את תמונת המכונית.", "בחירת שפה"],
+      uk: ["Ваш випадковий автомобіль на все життя", "Однакові дані завжди дають той самий автомобіль.", "Стать", "Вибрати", "Чоловіча", "Жіноча", "Рік народження", "Місяць", "День", "Ім’я", "Напр.: Alex, car2026, 85A", "Вибрати авто", "Введіть ім’я, щоб побачити авто.", "Рекомендоване авто", "Ще не вибрано", "Покращити за допомогою ШІ", "Спочатку заповніть усі поля.", "Однакові стать, дата народження та ім’я завжди дають те саме авто.", "Створення зображення ШІ.", "Не вдалося завантажити зображення авто.", "Вибрати мову"],
+      bg: ["Вашият уникален случаен автомобил", "Еднаквите данни винаги водят до една и съща кола.", "Пол", "Изберете", "Мъж", "Жена", "Година на раждане", "Месец", "Ден", "Име", "Напр. Alex, car2026, 85A", "Избери кола", "Въведете име, за да видите кола.", "Препоръчана кола", "Все още не е избрана", "Подобряване с AI", "Първо попълнете всички полета.", "Еднакви пол, дата на раждане и име винаги водят до една и съща кола.", "Създаване на AI изображение.", "Изображението не можа да се зареди.", "Изберете език"],
+      hr: ["Vaš jedinstveni nasumični automobil", "Isti podaci uvijek vode do istog automobila.", "Spol", "Odaberi", "Muško", "Žensko", "Godina rođenja", "Mjesec", "Dan", "Ime", "Npr. Alex, car2026, 85A", "Odaberi automobil", "Unesite ime za prikaz automobila.", "Preporučeni automobil", "Još nije odabrano", "Poboljšaj pomoću AI-ja", "Najprije ispunite sva polja.", "Isti spol, datum rođenja i ime uvijek vode do istog automobila.", "Izrada AI slike.", "Slika automobila nije učitana.", "Odaberi jezik"],
+      sk: ["Vaše jedinečné náhodné auto", "Rovnaké údaje vždy vedú k rovnakému autu.", "Pohlavie", "Vybrať", "Muž", "Žena", "Rok narodenia", "Mesiac", "Deň", "Meno", "Napr. Alex, car2026, 85A", "Vybrať auto", "Zadajte meno a zobrazí sa auto.", "Odporúčané auto", "Zatiaľ nevybrané", "Vylepšiť pomocou AI", "Najprv vyplňte všetky polia.", "Rovnaké pohlavie, dátum narodenia a meno vždy vedú k rovnakému autu.", "Vytvára sa obrázok AI.", "Obrázok auta sa nepodarilo načítať.", "Vybrať jazyk"],
+      sl: ["Vaš edinstveni naključni avto", "Isti podatki vedno vodijo do istega avtomobila.", "Spol", "Izberi", "Moški", "Ženska", "Leto rojstva", "Mesec", "Dan", "Ime", "Npr. Alex, car2026, 85A", "Izberi avto", "Vnesite ime za prikaz avtomobila.", "Priporočen avto", "Še ni izbrano", "Izboljšaj z AI", "Najprej izpolnite vsa polja.", "Isti spol, datum rojstva in ime vedno vodijo do istega avtomobila.", "Ustvarjanje slike AI.", "Slike avtomobila ni bilo mogoče naložiti.", "Izberi jezik"],
+      sr: ["Ваш јединствени насумични аутомобил", "Исти подаци увек воде до истог аутомобила.", "Пол", "Изаберите", "Мушки", "Женски", "Година рођења", "Месец", "Дан", "Име", "Нпр. Alex, car2026, 85A", "Изабери аутомобил", "Унесите име да видите аутомобил.", "Препоручени аутомобил", "Још није изабран", "Побољшај помоћу AI", "Прво попуните сва поља.", "Исти пол, датум рођења и име увек воде до истог аутомобила.", "Прављење AI слике.", "Слика аутомобила није учитана.", "Изаберите језик"],
+      ms: ["Kereta rawak sekali seumur hidup", "Maklumat yang sama sentiasa memberikan kereta yang sama.", "Jantina", "Pilih", "Lelaki", "Perempuan", "Tahun lahir", "Bulan", "Hari", "Nama", "Cth. Alex, car2026, 85A", "Pilih kereta", "Masukkan nama untuk melihat kereta.", "Kereta disyorkan", "Belum dipilih", "Tingkatkan dengan AI", "Lengkapkan semua medan dahulu.", "Jantina, tarikh lahir dan nama yang sama sentiasa memberikan kereta yang sama.", "Menjana imej AI.", "Imej kereta tidak dapat dimuatkan.", "Pilih bahasa"],
+      fil: ["Ang minsanang random na kotse mo", "Ang parehong detalye ay laging nagbibigay ng parehong kotse.", "Kasarian", "Pumili", "Lalaki", "Babae", "Taon ng kapanganakan", "Buwan", "Araw", "Pangalan", "Hal. Alex, car2026, 85A", "Pumili ng kotse", "Ilagay ang pangalan para makakita ng kotse.", "Inirerekomendang kotse", "Hindi pa napili", "Pagandahin gamit ang AI", "Kumpletuhin muna ang lahat ng field.", "Ang parehong kasarian, kaarawan at pangalan ay laging nagbibigay ng parehong kotse.", "Gumagawa ng AI image.", "Hindi ma-load ang larawan ng kotse.", "Pumili ng wika"],
+      fa: ["خودروی تصادفی یک‌بار در زندگی", "اطلاعات یکسان همیشه به همان خودرو می‌رسد.", "جنسیت", "انتخاب", "مرد", "زن", "سال تولد", "ماه", "روز", "نام", "مثال: Alex, car2026, 85A", "انتخاب خودرو", "برای دیدن خودرو نام را وارد کنید.", "خودروی پیشنهادی", "هنوز انتخاب نشده", "بهبود با هوش مصنوعی", "ابتدا همه فیلدها را کامل کنید.", "جنسیت، تاریخ تولد و نام یکسان همیشه به همان خودرو می‌رسد.", "در حال ساخت تصویر هوش مصنوعی.", "تصویر خودرو بارگیری نشد.", "انتخاب زبان"],
+      bn: ["জীবনে একবারের র‍্যান্ডম গাড়ি", "একই তথ্য সবসময় একই গাড়ি দেয়।", "লিঙ্গ", "নির্বাচন", "পুরুষ", "নারী", "জন্ম সাল", "মাস", "দিন", "নাম", "যেমন: Alex, car2026, 85A", "গাড়ি বাছুন", "গাড়ি দেখতে নাম লিখুন।", "প্রস্তাবিত গাড়ি", "এখনও নির্বাচন করা হয়নি", "AI দিয়ে উন্নত করুন", "আগে সব ঘর পূরণ করুন।", "একই লিঙ্গ, জন্মতারিখ ও নাম সবসময় একই গাড়ি দেয়।", "AI ছবি তৈরি হচ্ছে।", "গাড়ির ছবি লোড করা যায়নি।", "ভাষা নির্বাচন"],
+      sw: ["Gari lako la nasibu la maisha", "Taarifa sawa daima huleta gari lilelile.", "Jinsia", "Chagua", "Mwanaume", "Mwanamke", "Mwaka wa kuzaliwa", "Mwezi", "Siku", "Jina", "Mf. Alex, car2026, 85A", "Chagua gari", "Weka jina ili kuona gari.", "Gari lililopendekezwa", "Bado halijachaguliwa", "Boresha kwa AI", "Jaza sehemu zote kwanza.", "Jinsia, tarehe ya kuzaliwa na jina sawa daima huleta gari lilelile.", "Inatengeneza picha ya AI.", "Imeshindwa kupakia picha ya gari.", "Chagua lugha"]
+    };
+    const translations = Object.fromEntries(Object.entries(translationRows).map(([code, row]) => [code, Object.fromEntries(translationKeys.map((key, index) => [key, row[index]]))]));
+    let currentLanguage = "ko";
+
+    Object.entries(languageNames).forEach(([code, label]) => {
+      const option = document.createElement("option");
+      option.value = code;
+      option.textContent = label;
+      languageSelect.appendChild(option);
+    });
+
+    function t(key) {
+      return translations[currentLanguage]?.[key] || translations.ko[key] || key;
+    }
 
     function applyLanguage(language) {
       const nextLanguage = languageNames[language] ? language : "ko";
+      currentLanguage = nextLanguage;
       document.documentElement.lang = nextLanguage;
+      document.documentElement.dir = ["ar", "he", "fa"].includes(nextLanguage) ? "rtl" : "ltr";
       languageSelect.value = nextLanguage;
-      languageSelect.setAttribute("aria-label", nextLanguage === "ko" ? "언어 선택" : nextLanguage === "ja" ? "言語を選択" : "Select language");
+      languageSelect.setAttribute("aria-label", t("languageLabel"));
+      document.getElementById("appShell").setAttribute("aria-label", t("title"));
+      document.getElementById("heroTitle").textContent = t("title");
+      document.getElementById("heroLead").textContent = t("lead");
+      document.getElementById("genderLabel").textContent = t("gender");
+      document.getElementById("genderEmpty").textContent = t("select");
+      document.getElementById("genderMale").textContent = t("male");
+      document.getElementById("genderFemale").textContent = t("female");
+      document.getElementById("birthYearLabel").textContent = t("birthYear");
+      document.getElementById("birthMonthLabel").textContent = t("month");
+      document.getElementById("birthDayLabel").textContent = t("day");
+      document.getElementById("birthYearEmpty").textContent = t("select");
+      document.getElementById("birthMonthEmpty").textContent = t("select");
+      document.getElementById("birthDayEmpty").textContent = t("select");
+      document.getElementById("nameLabel").textContent = t("name");
+      input.placeholder = t("placeholder");
+      document.getElementById("pickButtonText").textContent = t("pick");
+      document.getElementById("recommendedLabel").textContent = t("recommended");
+      if (!selectedCar) {
+        placeholder.textContent = t("imagePlaceholder");
+        carName.textContent = t("notSelected");
+      }
+      hintText.textContent = selectedCar ? t("stable") : "";
+      loadingText.textContent = t("loading");
+      enhanceButton.querySelector("span").textContent = enhanceButton.disabled ? t("loading") : t("enhance");
       localStorage.setItem(languageStorageKey, nextLanguage);
     }
 
@@ -803,21 +890,21 @@
     for (let year = 2026; year >= 1940; year -= 1) {
       const option = document.createElement("option");
       option.value = String(year);
-      option.textContent = year + "년생";
+      option.textContent = String(year);
       birthYearSelect.appendChild(option);
     }
 
     for (let month = 1; month <= 12; month += 1) {
       const option = document.createElement("option");
       option.value = String(month);
-      option.textContent = month + "월";
+      option.textContent = String(month);
       birthMonthSelect.appendChild(option);
     }
 
     for (let day = 1; day <= 31; day += 1) {
       const option = document.createElement("option");
       option.value = String(day);
-      option.textContent = day + "일";
+      option.textContent = String(day);
       birthDaySelect.appendChild(option);
     }
 
@@ -859,10 +946,10 @@
 
       try {
         await navigator.clipboard.writeText(geminiPromptText.value);
-        promptStatus.textContent = "프롬프트가 복사되었습니다. Gemini 입력창에 붙여넣어 주세요.";
+        promptStatus.textContent = currentLanguage === "ko" ? "프롬프트가 복사되었습니다. Gemini 입력창에 붙여넣어 주세요." : t("stable");
       } catch (error) {
         document.execCommand("copy");
-        promptStatus.textContent = "프롬프트를 선택했습니다. 복사가 안 되면 Ctrl+C를 눌러주세요.";
+        promptStatus.textContent = currentLanguage === "ko" ? "프롬프트를 선택했습니다. 복사가 안 되면 Ctrl+C를 눌러주세요." : t("stable");
       }
     }
 
@@ -871,7 +958,7 @@
 
       geminiPromptText.value = buildGeminiPrompt(selectedCar);
       promptCarImage.src = selectedCar.image;
-      promptCarImage.alt = selectedCar.name + " 차량 이미지";
+      promptCarImage.alt = selectedCar.name;
       promptStatus.textContent = "";
       promptModal.hidden = false;
       copyGeminiPrompt();
@@ -886,7 +973,7 @@
       showingEnhancedImage = false;
       enhanceButton.hidden = !selectedCar;
       enhanceButton.disabled = false;
-      enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+      enhanceButton.querySelector("span").textContent = t("enhance");
       loadingIndicator.hidden = true;
     }
 
@@ -898,31 +985,31 @@
       const birthDay = birthDaySelect.value;
 
       if (!gender) {
-        hintText.textContent = "성별을 먼저 선택해주세요.";
+        hintText.textContent = t("required");
         genderSelect.focus();
         return;
       }
 
       if (!birthYear) {
-        hintText.textContent = "출생연도를 먼저 선택해주세요.";
+        hintText.textContent = t("required");
         birthYearSelect.focus();
         return;
       }
 
       if (!birthMonth) {
-        hintText.textContent = "출생월을 먼저 선택해주세요.";
+        hintText.textContent = t("required");
         birthMonthSelect.focus();
         return;
       }
 
       if (!birthDay) {
-        hintText.textContent = "출생일을 먼저 선택해주세요.";
+        hintText.textContent = t("required");
         birthDaySelect.focus();
         return;
       }
 
       if (!trimmed) {
-        hintText.textContent = "이름을 먼저 넣어주세요.";
+        hintText.textContent = t("required");
         input.focus();
         return;
       }
@@ -936,13 +1023,13 @@
         clearTimeout(aiLoadingTimer);
         aiLoadingTimer = null;
       }
-      hintText.textContent = "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.";
+      hintText.textContent = t("stable");
       carName.textContent = car.name;
       loadingIndicator.hidden = true;
       placeholder.hidden = true;
       carImage.hidden = false;
       carImage.classList.remove("ready");
-      carImage.alt = car.name + " 차량 이미지";
+      carImage.alt = car.name;
       carImage.src = car.image;
       resetEnhancement();
     }
@@ -953,7 +1040,7 @@
       carImage.classList.add("ready");
       if (showingEnhancedImage) {
         enhanceButton.disabled = false;
-        enhanceButton.querySelector("span").textContent = "AI로 다시 멋지게 만들기";
+        enhanceButton.querySelector("span").textContent = t("enhance");
       }
     });
 
@@ -962,10 +1049,10 @@
       loadingIndicator.hidden = true;
       placeholder.hidden = false;
       placeholder.textContent = showingEnhancedImage
-        ? "AI 이미지 생성이 잠시 지연되고 있습니다. 다시 눌러주세요."
-        : "차량 이미지를 불러오지 못했습니다.";
+        ? t("loading")
+        : t("imageError");
       enhanceButton.disabled = false;
-      enhanceButton.querySelector("span").textContent = "AI로 더 멋지게 만들기";
+      enhanceButton.querySelector("span").textContent = t("enhance");
     });
 
     function generateEnhancedImage() {
@@ -973,12 +1060,12 @@
 
       if (aiLoadingTimer) clearTimeout(aiLoadingTimer);
       enhanceButton.disabled = true;
-      enhanceButton.querySelector("span").textContent = "AI 이미지 생성 중";
+      enhanceButton.querySelector("span").textContent = t("loading");
       showingEnhancedImage = true;
       placeholder.hidden = true;
       carImage.classList.remove("ready");
       carImage.hidden = true;
-      loadingText.textContent = "AI 이미지 생성 중입니다.";
+      loadingText.textContent = t("loading");
       loadingIndicator.hidden = false;
 
       aiLoadingTimer = setTimeout(() => {
