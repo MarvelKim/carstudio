@@ -24,9 +24,6 @@
       --stage-bg: linear-gradient(180deg, #fdfefe 0%, #edf1f6 100%);
       --frame-bg: #ffffff;
       --meta-bg: #fbfcfe;
-      --visitor-bg: #f7f9fc;
-      --visitor-label: #667386;
-      --visitor-value: #1f2937;
       --accent: #0f6bff;
       --accent-dark: #0849b6;
       --accent-soft: #eaf2ff;
@@ -52,9 +49,6 @@
       --stage-bg: linear-gradient(180deg, #151b25 0%, #090d13 100%);
       --frame-bg: #0a0e14;
       --meta-bg: #161c27;
-      --visitor-bg: #0d1118;
-      --visitor-label: #9aa6b6;
-      --visitor-value: #f4f7fb;
       --accent: #4b8dff;
       --accent-dark: #2f6fdc;
       --accent-soft: #152640;
@@ -111,16 +105,26 @@
       letter-spacing: 0;
     }
 
-    .count {
-      color: var(--control-subtle);
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
     .brand-actions {
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+
+    .language-select {
+      width: auto;
+      min-width: 94px;
+      height: 32px;
+      min-height: 32px;
+      border: 1px solid var(--field-border);
+      border-radius: 6px;
+      padding: 0 28px 0 10px;
+      background-color: var(--field-bg);
+      color: var(--field-text);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .theme-toggle {
@@ -308,39 +312,13 @@
       font-size: 13px;
     }
 
-    .visitor-stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      max-width: 470px;
+    .control-ad-space {
+      width: 100%;
+      min-height: 118px;
       margin-top: 2px;
-    }
-
-    .visitor-stat {
-      min-width: 0;
       border: 1px solid var(--field-border);
       border-radius: 6px;
-      padding: 12px 13px;
-      background: var(--visitor-bg);
-    }
-
-    .visitor-stat span {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--visitor-label);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .visitor-stat strong {
-      display: block;
-      color: var(--visitor-value);
-      font-size: clamp(20px, 3vw, 26px);
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: 0;
-      font-variant-numeric: tabular-nums;
-      overflow-wrap: anywhere;
+      background: transparent;
     }
 
     .history {
@@ -634,7 +612,7 @@
         grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr) minmax(0, 0.72fr);
       }
       button { width: 100%; }
-      .visitor-stats { grid-template-columns: 1fr 1fr; }
+      .control-ad-space { min-height: 100px; }
       .history button { width: auto; }
       .result { min-height: 520px; }
       .details { padding: 0; }
@@ -659,7 +637,11 @@
           <div class="brand">
             <strong>Car Studio</strong>
             <div class="brand-actions">
-              <span class="count" id="countText"></span>
+              <select class="language-select" id="languageSelect" aria-label="언어 선택">
+                <option value="ko">한국어</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
               <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" data-theme="light">
                 <span class="theme-sun" aria-hidden="true"></span>
               </button>
@@ -704,16 +686,7 @@
               </div>
             </label>
             <div class="hint" id="hintText"></div>
-            <div class="visitor-stats" aria-label="방문자 통계">
-              <div class="visitor-stat">
-                <span>오늘 방문자</span>
-                <strong id="todayVisitors">-</strong>
-              </div>
-              <div class="visitor-stat">
-                <span>누계 방문자</span>
-                <strong id="totalVisitors">-</strong>
-              </div>
-            </div>
+            <div class="control-ad-space" aria-label="광고 영역"></div>
           </form>
         </div>
         <ul class="history" id="historyList" aria-label="최근 이름"></ul>
@@ -789,13 +762,12 @@
     const copyPromptButton = document.getElementById("copyPromptButton");
     const openGeminiButton = document.getElementById("openGeminiButton");
     const promptStatus = document.getElementById("promptStatus");
-    const countText = document.getElementById("countText");
+    const languageSelect = document.getElementById("languageSelect");
     const historyList = document.getElementById("historyList");
     const themeToggle = document.getElementById("themeToggle");
-    const todayVisitors = document.getElementById("todayVisitors");
-    const totalVisitors = document.getElementById("totalVisitors");
     const storageKey = "carstudioRecentSeeds";
     const themeStorageKey = "carstudioTheme";
+    const languageStorageKey = "carstudioLanguage";
     let selectedCar = null;
     let selectedCarIndex = -1;
     let selectedProfileSeed = "";
@@ -815,59 +787,18 @@
 
     localStorage.removeItem(storageKey);
     historyList.innerHTML = "";
-    countText.textContent = cars.length.toLocaleString("ko-KR") + "개 모델";
+    const languageNames = { ko: "한국어", en: "English", ja: "日本語" };
 
-    function formatNumber(value) {
-      return Number(value || 0).toLocaleString("ko-KR");
+    function applyLanguage(language) {
+      const nextLanguage = languageNames[language] ? language : "ko";
+      document.documentElement.lang = nextLanguage;
+      languageSelect.value = nextLanguage;
+      languageSelect.setAttribute("aria-label", nextLanguage === "ko" ? "언어 선택" : nextLanguage === "ja" ? "言語を選択" : "Select language");
+      localStorage.setItem(languageStorageKey, nextLanguage);
     }
 
-    function getTodayKey() {
-      return new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Seoul",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(new Date());
-    }
-
-    function updateVisitorText(today, total) {
-      todayVisitors.textContent = formatNumber(today);
-      totalVisitors.textContent = formatNumber(total);
-    }
-
-    function bumpLocalVisitors(todayKey) {
-      const localKey = "carstudioVisitors";
-      const saved = JSON.parse(localStorage.getItem(localKey) || "{}");
-      const next = {
-        date: todayKey,
-        today: saved.date === todayKey ? Number(saved.today || 0) + 1 : 1,
-        total: Number(saved.total || 0) + 1
-      };
-      localStorage.setItem(localKey, JSON.stringify(next));
-      updateVisitorText(next.today, next.total);
-    }
-
-    async function bumpVisitors() {
-      const todayKey = getTodayKey();
-
-      try {
-        const response = await fetch("/api/visitors", {
-          method: "POST",
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error("Visitor counter request failed");
-        }
-
-        const data = await response.json();
-        updateVisitorText(data.today, data.total);
-      } catch (error) {
-        bumpLocalVisitors(todayKey);
-      }
-    }
-
-    bumpVisitors();
+    applyLanguage(localStorage.getItem(languageStorageKey) || "ko");
+    languageSelect.addEventListener("change", () => applyLanguage(languageSelect.value));
 
     for (let year = 2026; year >= 1940; year -= 1) {
       const option = document.createElement("option");
