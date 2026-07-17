@@ -363,10 +363,34 @@
     }
 
     .result {
+      position: relative;
       display: grid;
       min-height: 100%;
       background: var(--result-bg);
     }
+
+    .mini-game-button {
+      position: absolute;
+      z-index: 4;
+      top: 14px;
+      right: 28px;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 15px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 7px 18px rgba(15, 107, 255, 0.2);
+    }
+
+    .mini-game-button:hover { background: var(--accent-dark); }
+    .mini-game-button[hidden] { display: none; }
 
     .image-stage {
       display: grid;
@@ -640,6 +664,8 @@
       .control-ad-space { min-height: 100px; }
       .history button { width: auto; }
       .result { min-height: 520px; }
+      .mini-game-button { top: 10px; right: 18px; left: 18px; }
+      .image-stage { padding-top: 68px; }
       .details { padding: 0; }
       .meta { grid-template-columns: 1fr; }
       .ad-space { min-height: 120px; }
@@ -713,6 +739,7 @@
       </div>
 
       <div class="result">
+        <a class="mini-game-button" id="miniGameButton" href="/game.html" target="_blank" rel="noopener" hidden>이 자동차로 미니게임하기</a>
         <div class="image-stage">
           <div class="image-frame" id="imageFrame">
             <div class="placeholder" id="placeholder">이름을 입력하면 차량 사진이 표시됩니다.</div>
@@ -785,6 +812,7 @@
     const languageSelect = document.getElementById("languageSelect");
     const historyList = document.getElementById("historyList");
     const themeToggle = document.getElementById("themeToggle");
+    const miniGameButton = document.getElementById("miniGameButton");
     const storageKey = "carstudioRecentSeeds";
     const themeStorageKey = "carstudioTheme";
     const languageStorageKey = "carstudioLanguage";
@@ -826,6 +854,12 @@
       he: "מדריך", uk: "Довідка", bg: "Ръководство", hr: "Vodič", sk: "Sprievodca",
       sl: "Vodnik", sr: "Водич", ms: "Panduan", fil: "Gabay", fa: "راهنما",
       bn: "নির্দেশিকা", sw: "Mwongozo"
+    };
+    const miniGameLabels = {
+      ko: "이 자동차로 미니게임하기", en: "Play a mini-game with this car", ja: "この車でミニゲームをする",
+      "zh-CN": "用这辆车玩小游戏", "zh-TW": "用這輛車玩小遊戲", es: "Jugar con este coche",
+      fr: "Jouer avec cette voiture", de: "Mit diesem Auto spielen", "pt-BR": "Jogar com este carro",
+      pt: "Jogar com este carro", ru: "Играть с этой машиной", it: "Gioca con questa auto"
     };
     const translationKeys = ["title", "lead", "gender", "select", "male", "female", "birthYear", "month", "day", "name", "placeholder", "pick", "imagePlaceholder", "recommended", "notSelected", "enhance", "required", "stable", "loading", "imageError", "languageLabel"];
     const translationRows = {
@@ -894,6 +928,7 @@
       const infoLink = document.getElementById("infoLink");
       infoLink.textContent = guideLabels[nextLanguage];
       infoLink.setAttribute("aria-label", `${guideLabels[nextLanguage]} - Car Studio`);
+      miniGameButton.textContent = miniGameLabels[nextLanguage] || miniGameLabels.en;
       document.getElementById("appShell").setAttribute("aria-label", t("title"));
       const heroTitle = document.getElementById("heroTitle");
       if (nextLanguage === "ko") {
@@ -1071,6 +1106,8 @@
       selectedCar = car;
       selectedCarIndex = index;
       selectedProfileSeed = profileSeed;
+      localStorage.setItem("carstudioGameCar", JSON.stringify({ name: car.name, image: car.image, index }));
+      miniGameButton.hidden = false;
       if (aiLoadingTimer) {
         clearTimeout(aiLoadingTimer);
         aiLoadingTimer = null;
