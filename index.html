@@ -660,7 +660,7 @@
           <div class="brand">
             <strong>Car Studio</strong>
             <div class="brand-actions">
-              <a class="info-link" href="/about.html" target="_blank" rel="noopener" aria-label="Car Studio 서비스 안내 새 창에서 보기">안내</a>
+              <a class="info-link" id="infoLink" href="/about.html" target="_blank" rel="noopener" aria-label="Car Studio 서비스 안내 새 창에서 보기">안내</a>
               <select class="language-select" id="languageSelect" aria-label="언어 선택"></select>
               <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" data-theme="light">
                 <span class="theme-sun" aria-hidden="true"></span>
@@ -817,6 +817,16 @@
       sl: "Slovenščina", sr: "Српски", ms: "Bahasa Melayu", fil: "Filipino", fa: "فارسی",
       bn: "বাংলা", sw: "Kiswahili"
     };
+    const guideLabels = {
+      ko: "안내", en: "Guide", ja: "案内", "zh-CN": "指南", "zh-TW": "指南",
+      es: "Guía", fr: "Guide", de: "Info", "pt-BR": "Guia", pt: "Guia",
+      ru: "Справка", it: "Guida", nl: "Uitleg", pl: "Pomoc", tr: "Rehber", ar: "دليل",
+      hi: "मार्गदर्शिका", id: "Panduan", vi: "Hướng dẫn", th: "คำแนะนำ", sv: "Guide", no: "Guide",
+      da: "Guide", fi: "Ohje", cs: "Průvodce", ro: "Ghid", hu: "Útmutató", el: "Οδηγός",
+      he: "מדריך", uk: "Довідка", bg: "Ръководство", hr: "Vodič", sk: "Sprievodca",
+      sl: "Vodnik", sr: "Водич", ms: "Panduan", fil: "Gabay", fa: "راهنما",
+      bn: "নির্দেশিকা", sw: "Mwongozo"
+    };
     const translationKeys = ["title", "lead", "gender", "select", "male", "female", "birthYear", "month", "day", "name", "placeholder", "pick", "imagePlaceholder", "recommended", "notSelected", "enhance", "required", "stable", "loading", "imageError", "languageLabel"];
     const translationRows = {
       ko: ["생애 한 번뿐인 랜덤 자동차", "같은 이름은 같은 차량으로 다시 연결됩니다.", "성별", "선택", "남자", "여자", "출생연도", "월", "일", "이름", "예: 홍길동, car2026, 85A", "차량 뽑기", "이름을 입력하면 차량 사진이 표시됩니다.", "추천 차량", "아직 선택되지 않음", "AI로 더 멋지게 만들기", "모든 항목을 먼저 입력해주세요.", "같은 성별, 생년월일, 이름은 항상 같은 차량으로 연결됩니다.", "AI 이미지 생성 중입니다.", "차량 이미지를 불러오지 못했습니다.", "언어 선택"],
@@ -881,6 +891,9 @@
       document.documentElement.dir = ["ar", "he", "fa"].includes(nextLanguage) ? "rtl" : "ltr";
       languageSelect.value = nextLanguage;
       languageSelect.setAttribute("aria-label", t("languageLabel"));
+      const infoLink = document.getElementById("infoLink");
+      infoLink.textContent = guideLabels[nextLanguage];
+      infoLink.setAttribute("aria-label", `${guideLabels[nextLanguage]} - Car Studio`);
       document.getElementById("appShell").setAttribute("aria-label", t("title"));
       const heroTitle = document.getElementById("heroTitle");
       if (nextLanguage === "ko") {
