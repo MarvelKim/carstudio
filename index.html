@@ -649,8 +649,6 @@
         font-size: clamp(21px, 6.4vw, 27px);
         white-space: nowrap;
       }
-      h1 br { display: none; }
-      .mobile-join { display: inline; }
     }
   </style>
 </head>
@@ -669,7 +667,7 @@
               </button>
             </div>
           </div>
-          <h1 id="heroTitle">생애 한 번뿐인<br><span class="mobile-join"> </span>랜덤 자동차</h1>
+          <h1 id="heroTitle">생애 단 한 번뿐인<br>랜덤 자동차</h1>
           <p class="lead" id="heroLead">같은 이름은 같은 차량으로 다시 연결됩니다.</p>
           <form id="pickerForm">
             <div class="profile-row">
@@ -884,7 +882,12 @@
       languageSelect.value = nextLanguage;
       languageSelect.setAttribute("aria-label", t("languageLabel"));
       document.getElementById("appShell").setAttribute("aria-label", t("title"));
-      document.getElementById("heroTitle").textContent = t("title");
+      const heroTitle = document.getElementById("heroTitle");
+      if (nextLanguage === "ko") {
+        heroTitle.replaceChildren("생애 단 한 번뿐인", document.createElement("br"), "랜덤 자동차");
+      } else {
+        heroTitle.textContent = t("title");
+      }
       document.getElementById("heroLead").textContent = t("lead");
       document.getElementById("genderLabel").textContent = t("gender");
       document.getElementById("genderEmpty").textContent = t("select");
@@ -946,6 +949,16 @@
     function pickCar(profileSeed) {
       const hash = hashSeed(profileSeed);
       return { car: cars[hash % cars.length], index: hash % cars.length };
+    }
+
+    function renderCarName(name) {
+      carName.textContent = name;
+      const lineHeight = Number.parseFloat(getComputedStyle(carName).lineHeight);
+      if (carName.getBoundingClientRect().height <= lineHeight * 1.5) return;
+
+      const manufacturer = name.startsWith("Mercedes Benz ") ? "Mercedes Benz" : name.split(" ")[0];
+      const model = name.slice(manufacturer.length).trim();
+      if (model) carName.replaceChildren(manufacturer, document.createElement("br"), model);
     }
 
     function normalizeAiModelName(name) {
@@ -1050,7 +1063,7 @@
         aiLoadingTimer = null;
       }
       hintText.textContent = t("stable");
-      carName.textContent = car.name;
+      renderCarName(car.name);
       loadingIndicator.hidden = true;
       placeholder.hidden = true;
       carImage.hidden = false;
