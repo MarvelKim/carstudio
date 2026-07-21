@@ -1128,6 +1128,13 @@
       loadingIndicator.hidden = true;
       carImage.classList.add("ready");
       if (showingEnhancedImage) {
+        localStorage.setItem("carstudioGameCar", JSON.stringify({
+          name: selectedCar.name,
+          image: carImage.currentSrc || carImage.src,
+          fallbackImage: selectedCar.image,
+          index: selectedCarIndex,
+          aiEnhanced: true
+        }));
         enhanceButton.disabled = false;
         enhanceButton.querySelector("span").textContent = t("enhance");
       }
