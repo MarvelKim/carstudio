@@ -819,6 +819,7 @@
     let selectedCar = null;
     let selectedCarIndex = -1;
     let selectedProfileSeed = "";
+    let selectedPlayerName = "";
     let showingEnhancedImage = false;
     let aiLoadingTimer = null;
 
@@ -1106,7 +1107,9 @@
       selectedCar = car;
       selectedCarIndex = index;
       selectedProfileSeed = profileSeed;
-      localStorage.setItem("carstudioGameCar", JSON.stringify({ name: car.name, image: car.image, index }));
+      selectedPlayerName = trimmed;
+      localStorage.setItem("carstudioPlayerName", selectedPlayerName);
+      localStorage.setItem("carstudioGameCar", JSON.stringify({ name: car.name, image: car.image, index, playerName: selectedPlayerName }));
       miniGameButton.hidden = false;
       if (aiLoadingTimer) {
         clearTimeout(aiLoadingTimer);
@@ -1133,6 +1136,7 @@
           image: carImage.currentSrc || carImage.src,
           fallbackImage: selectedCar.image,
           index: selectedCarIndex,
+          playerName: selectedPlayerName,
           aiEnhanced: true
         }));
         enhanceButton.disabled = false;
