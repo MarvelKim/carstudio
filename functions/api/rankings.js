@@ -42,30 +42,36 @@ const normalizeName = (value) =>
 const maskName = (name) => {
   const characters = Array.from(name);
   if (!characters.length) return "***";
-  if (/[\u3131-\u318e\uac00-\ud7a3]/.test(name)) {
-    return characters[0] + "*".repeat(Math.max(1, characters.length - 1));
-  }
-  const compact = Array.from(name.replace(/\s+/g, ""));
-  return compact.slice(0, Math.min(3, compact.length)).join("") + "****";
+  return characters[0] + "**";
 };
 
 const shardKey = (index) => `minigame:ranking:v1:${index.toString(16)}`;
 
 const readShard = async (store, index) => {
-  try {
-    const raw = await store.get(shardKey(index));
-    const rows = raw ? JSON.parse(raw) : [];
-    return Array.isArray(rows) ? rows : [];
-  } catch (_) {
-    return [];
-  }
+  const raw = await store.get(shardKey(index));
+  if (!raw) return [];
+  const rows = JSON.parse(raw);
+  if (!Array.isArray(rows)) throw new Error(`Invalid ranking shard: ${index}`);
+  return rows;
 };
 
 const sortRows = (rows) =>
   rows.sort((a, b) => b.score - a.score || a.updatedAt - b.updatedAt);
 
-const publicBoard = (shards, playerId) =>
-  sortRows(shards.flat())
+const publicBoard = (shards, playerId) => {
+  // A player can only have one global entry. De-duplicating here also protects
+  // rankings created before a shard-count or hashing change.
+  const bestByPlayer = new Map();
+  for (const row of shards.flat()) {
+    if (!row || typeof row.id !== "string" || !Number.isFinite(row.score)) continue;
+    const previous = bestByPlayer.get(row.id);
+    if (!previous || row.score > previous.score ||
+        (row.score === previous.score && row.updatedAt < previous.updatedAt)) {
+      bestByPlayer.set(row.id, row);
+    }
+  }
+
+  return sortRows([...bestByPlayer.values()])
     .slice(0, BOARD_LIMIT)
     .map((row, index) => ({
       rank: index + 1,
@@ -74,6 +80,7 @@ const publicBoard = (shards, playerId) =>
       car: row.car,
       isMe: row.id === playerId
     }));
+};
 
 const loadBoard = async (store, playerId, knownShardIndex = -1, knownShard = null) => {
   const shards = await Promise.all(
@@ -91,6 +98,8 @@ export async function onRequestGet({ request, env }) {
   const playerId = await getPlayerId(request, env);
   return json({ rankings: await loadBoard(store, playerId) });
 }
+
+export const __test = { maskName, publicBoard };
 
 export async function onRequestPost({ request, env }) {
   const store = getStore(env);
