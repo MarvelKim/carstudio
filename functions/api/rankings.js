@@ -48,11 +48,15 @@ const maskName = (name) => {
 const shardKey = (index) => `minigame:ranking:v1:${index.toString(16)}`;
 
 const readShard = async (store, index) => {
-  const raw = await store.get(shardKey(index));
-  if (!raw) return [];
-  const rows = JSON.parse(raw);
-  if (!Array.isArray(rows)) throw new Error(`Invalid ranking shard: ${index}`);
-  return rows;
+  try {
+    const raw = await store.get(shardKey(index));
+    if (!raw) return [];
+    const rows = JSON.parse(raw);
+    return Array.isArray(rows) ? rows : [];
+  } catch (_) {
+    // One stale/corrupt KV shard must not take the entire leaderboard offline.
+    return [];
+  }
 };
 
 const sortRows = (rows) =>
