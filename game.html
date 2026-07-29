@@ -73,7 +73,8 @@
   <div class="overlay hidden" id="pauseOverlay"><div class="card"><span class="badge" data-t="paused">잠시 정차 중</span><h1 data-t="pausedTitle">PAUSED</h1><p data-t="pausedDesc">준비되면 다시 출발하세요.</p><button class="btn primary" id="resumeBtn" data-t="resume">계속하기</button></div></div>
   <div class="overlay hidden" id="resultOverlay"><div class="card"><span class="badge" data-t="result">주행 결과</span><h1 id="finalDistance">0 m</h1><div class="record" id="newRecord"></div><p id="resultCopy"></p><div class="actions"><button class="btn primary" id="againBtn" data-t="retry">재도전</button><button class="btn" id="shareBtn" data-t="share">기록 공유하기</button><button class="btn" id="resultRankBtn">🏆 <span data-t="viewTop10">전체 TOP 10 보기</span></button></div></div></div>
   <div class="overlay hidden" id="rankingOverlay" role="dialog" aria-modal="true" aria-labelledby="rankingTitle"><div class="card ranking-card"><span class="badge" data-t="globalRanking">전체 사용자 랭킹</span><h1 id="rankingTitle">TOP 10</h1><p class="ranking-state" id="rankingState" data-t="rankingLoading">랭킹을 불러오는 중...</p><ol class="ranking-list" id="rankingList"></ol><button class="btn ranking-close" id="rankingCloseBtn" data-t="close">닫기</button></div></div>
-  <script>
+  <script type="module">
+  import {FLIGHT_TUNING,airborneForwardVelocity,bounceVerticalVelocity,launchVerticalVelocity} from './game-physics.js';
   (()=>{
     'use strict';
     const T={ko:{back:'돌아가기',pause:'일시정지',retry:'재도전',distance:'비행 거리',best:'최고 기록',angleHelp:'화살표가 좋은 각도일 때 누르세요',angleButton:'각도 정하기',powerHelp:'누르고 있다가 최고의 힘에서 떼세요!',powerButton:'꾹 누르고 힘 모으기',spring:'슈퍼 스프링',boost:'니트로 부스트',oil:'오일: 다음 보너스 무효',crusher:'파쇄기: 즉시 종료',paused:'잠시 정차 중',pausedTitle:'PAUSED',pausedDesc:'준비되면 다시 출발하세요.',resume:'계속하기',result:'주행 결과',share:'기록 공유하기',newRecord:'신기록!',record:'기록: {d}',resultText:'{car}가 {d}를 날아갔어요!',shareText:'내 {car}가 Car Studio 멀리날리기에서 {d}를 기록했어요! 🚗💨',copied:'기록을 복사했어요!',springHit:'슈퍼 스프링! 하늘 높이!',boostHit:'니트로 부스트! 더 빠르게!',oilHit:'오일 함정! 다음 보너스 무효',blocked:'보너스가 오일 때문에 사라졌어요!',crusherHit:'파쇄기 충돌! 주행 종료',groundHit:'통통! 다시 날아갑니다'},en:{back:'Back',pause:'Pause',retry:'Retry',distance:'Distance',best:'Best',angleHelp:'Press when the arrow has a great angle',angleButton:'Set angle',powerHelp:'Hold, then release at maximum power!',powerButton:'Hold to charge power',spring:'Super spring',boost:'Nitro boost',oil:'Oil: blocks next bonus',crusher:'Crusher: instant finish',paused:'Pit stop',pausedTitle:'PAUSED',pausedDesc:'Resume when you are ready.',resume:'Resume',result:'Flight result',share:'Share record',newRecord:'New record!',record:'Record: {d}',resultText:'Your {car} flew {d}!',shareText:'My {car} flew {d} in Car Studio Sky Launch! 🚗💨',copied:'Record copied!',springHit:'Super spring! Sky high!',boostHit:'Nitro boost! Faster!',oilHit:'Oil trap! Next bonus blocked',blocked:'The oil trap cancelled the bonus!',crusherHit:'Crusher hit! Run over',groundHit:'Boing! Keep flying'},ja:{back:'戻る',pause:'一時停止',retry:'リトライ',distance:'飛距離',best:'ベスト',angleHelp:'良い角度でボタンを押そう',angleButton:'角度を決める',powerHelp:'長押しして最大パワーで離そう！',powerButton:'長押しでパワー',spring:'スーパーばね',boost:'ニトロブースト',oil:'オイル：次のボーナス無効',crusher:'クラッシャー：即終了',paused:'停車中',pausedTitle:'PAUSED',pausedDesc:'準備ができたら再開しよう。',resume:'続ける',result:'飛行結果',share:'記録を共有',newRecord:'新記録！',record:'記録：{d}',resultText:'{car}が{d}飛びました！',shareText:'Car Studioで{car}が{d}飛びました！🚗💨',copied:'記録をコピーしました！',springHit:'スーパーばね！高く飛べ！',boostHit:'ニトロ！もっと速く！',oilHit:'オイル！次のボーナス無効',blocked:'オイルでボーナスが消えた！',crusherHit:'クラッシャー衝突！終了',groundHit:'バウンド！まだ飛べる'},zh:{back:'返回',pause:'暂停',retry:'重试',distance:'飞行距离',best:'最佳纪录',angleHelp:'箭头角度合适时按下',angleButton:'确定角度',powerHelp:'按住蓄力，在最大力量时松开！',powerButton:'按住蓄力',spring:'超级弹簧',boost:'氮气加速',oil:'机油：抵消下一奖励',crusher:'粉碎机：立即结束',paused:'暂停中',pausedTitle:'PAUSED',pausedDesc:'准备好后继续出发。',resume:'继续',result:'飞行结果',share:'分享纪录',newRecord:'新纪录！',record:'纪录：{d}',resultText:'你的{car}飞了{d}！',shareText:'我的{car}在Car Studio飞了{d}！🚗💨',copied:'纪录已复制！',springHit:'超级弹簧！冲上天空！',boostHit:'氮气加速！更快！',oilHit:'机油陷阱！下一奖励无效',blocked:'奖励被机油抵消了！',crusherHit:'撞上粉碎机！游戏结束',groundHit:'弹起来！继续飞'}};
@@ -85,6 +86,7 @@
     let lang=localStorage.getItem('carstudioGameLang')||((navigator.language||'ko').slice(0,2));if(!T[lang])lang='en';
     const $=s=>document.querySelector(s),canvas=$('#game'),ctx=canvas.getContext('2d'),carData=(()=>{try{return JSON.parse(localStorage.getItem('carstudioGameCar'))}catch(e){return null}})()||{name:'Mystery Car',image:'',index:0};
     const playerName=String(carData.playerName||localStorage.getItem('carstudioPlayerName')||'Guest Driver').trim().slice(0,40);
+    const rankingPlayerToken=(()=>{const key='carstudioRankingPlayerToken';try{let saved=localStorage.getItem(key);if(/^[A-Za-z0-9_-]{16,128}$/.test(saved||''))return saved;let created=crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,'0')).join('');localStorage.setItem(key,created);return created}catch(e){return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`}})();
     const mobileDevice=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<=1024);let orientationBlocked=false;
     // Every source vehicle is authored facing left. Keep this deterministic instead of
     // guessing from headlamp brightness, which misclassified models such as Porsche Macan.
@@ -94,9 +96,10 @@
     carImg.onerror=()=>{if(tryCors){tryCors=false;carImg.removeAttribute('crossorigin');carImg.src='';loadCarSource()}else if(++carSourceIndex<carSources.length){tryCors=true;loadCarSource()}};
     carImg.onload=()=>{try{const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true}),size=320,sourceW=carImg.naturalWidth||size,sourceH=carImg.naturalHeight||size,sourceScale=Math.min(size/sourceW,size/sourceH),drawW=sourceW*sourceScale,drawH=sourceH*sourceScale;c.width=c.height=size;x.drawImage(carImg,(size-drawW)/2,(size-drawH)/2,drawW,drawH);const img=x.getImageData(0,0,size,size),d=img.data;let minX=size,minY=size,maxX=0,maxY=0;for(let y=0;y<size;y++)for(let xx=0;xx<size;xx++){let i=(y*size+xx)*4,r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];if(r>248&&g>248&&b>248)d[i+3]=a=0;if(a>35){minX=Math.min(minX,xx);maxX=Math.max(maxX,xx);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}}x.putImageData(img,0,0);if(maxX>minX){const out=document.createElement('canvas'),ox=out.getContext('2d'),pad=5;out.width=maxX-minX+1+pad*2;out.height=maxY-minY+1+pad*2;ox.drawImage(c,minX,minY,maxX-minX+1,maxY-minY+1,pad,pad,maxX-minX+1,maxY-minY+1);carSprite.canvas=out}carSprite.flip=true}catch(e){carSprite.canvas=null;carSprite.flip=true}};
     loadCarSource();
-    let W,H,dpr=1,sceneScale=1,last=0,raf,phase='angle',paused=false,angle=.62,angleDir=1,power=0,powerDir=1,holding=false,camera=0,time=0,lastEffectAt=-99,obstacles=[],nextObstacleIndex=0,nextObstacleX=950,previousObstacleHalf=0,particles=[],best=+localStorage.getItem('carstudioSkyBest')||0,blocked=false,bounces=0,rolling=false,bounceRecovery=null,truckX=-360,hitFlash=0,carColor='#2f80ed',itemQueueSignature='',leaderboard=[],rankingLoading=false,rankingFailed=false,resumeAfterRanking=false;
+    let W,H,dpr=1,sceneScale=1,last=0,raf,phase='angle',paused=false,angle=.62,angleDir=1,power=0,powerDir=1,holding=false,camera=0,time=0,lastEffectAt=-99,obstacles=[],nextObstacleIndex=0,nextObstacleX=950,previousObstacleHalf=0,particles=[],best=+localStorage.getItem('carstudioSkyBest')||0,blocked=false,bounces=0,rolling=false,truckX=-360,hitFlash=0,carColor='#2f80ed',itemQueueSignature='',leaderboard=[],rankingLoading=false,rankingFailed=false,resumeAfterRanking=false;
     const car={x:180,y:0,vx:0,vy:0,rot:0,vr:0,w:325,h:162};
-    const LAUNCH_X=180,DISTANCE_SCALE=.11,MAX_PLAYABLE_SPEED=56000,ITEM_EFFECT_MULTIPLIER=25,LAUNCH_SPEED_MULTIPLIER=20,ITEM_SCALE=2,CAR_ROAD_OFFSET=0,MIN_BOUNCE_SPEED=240,MIN_BOUNCE_IMPACT=360,MIN_BOUNCE_LIFT=240,MAX_BOUNCE_LIFT=1100,BOUNCE_RESTITUTION=.16,BOUNCE_RECOVERY_TIME=.22,MIN_AIR_SPIN=4.8,STOP_SPEED=22;
+    const {GRAVITY,MAX_FALL_SPEED,ROLLING_DRAG_PER_FRAME,HORIZONTAL_BOUNCE_RETENTION,MAX_GROUND_BOUNCES,SKY_ITEM_LIFT,TRAP_ITEM_LIFT,ENERGY_ITEM_LIFT}=FLIGHT_TUNING;
+    const LAUNCH_X=180,DISTANCE_SCALE=.11,MAX_PLAYABLE_SPEED=56000,ITEM_EFFECT_MULTIPLIER=25,LAUNCH_SPEED_MULTIPLIER=20,ITEM_SCALE=2,CAR_ROAD_OFFSET=0,MIN_BOUNCE_SPEED=240,MIN_BOUNCE_IMPACT=360,MIN_AIR_SPIN=4.8,STOP_SPEED=22;
     // Twenty private game body profiles. They are selected by model name and never exposed in the picker UI.
     const GAME_PROFILES=[['city','mini|smart|500|mirage|spark|picanto',.72,.82],['hatch','golf|jazz|rio|yaris|leaf|zoe|208|ibiza',.84,.88],['hot-hatch','type r|gti|golf r|focus rs|i30 n',.88,.82],['compact-sedan','a3|civic|corolla|elantra|forte|sentra|jetta|cla',.94,.78],['sedan','a4|a5|accord|camry|sonata|k5|g70|c-class|3 series',1,.76],['luxury-sedan','a6|a7|a8|g80|g90|s-class|7 series|lexus ls|panamera',1.08,.78],['fastback','stinger|arteon|ioniq 6|model s|model 3',1.04,.72],['wagon','wagon|avant|touring|outback|cross turismo|leon st',1.08,.78],['coupe','coupe|brz|gr86|supra|mustang|camaro|challenger|gt-r',.98,.66],['supercar','lamborghini|ferrari|mclaren|r8|911|amg gt|revuelto|huracan',1,.58],['convertible','convertible|cabriolet|roadster|boxster|spyder|targa',.98,.58],['crossover','kona|niro|kicks|venue|ux|hr-v|crosstrek|taos|captur',.92,.92],['compact-suv','q3|q5|rav4|cr-v|tucson|sportage|tiguan|cx-5|glc|x3',1,1],['midsize-suv','sorento|santa fe|highlander|pilot|passport|rx|gle|cayenne|model x',1.08,1.06],['large-suv','q7|q8|palisade|telluride|yukon|expedition|armada|sequoia|gls',1.15,1.12],['offroad','wrangler|bronco|g-class|defender|4runner|recon|avenger',1.02,1.12],['pickup','pickup|f-150|ranger|maverick|tacoma|tundra|frontier|ridgeline|gladiator|santa cruz|cybertruck|r1t|r2t',1.18,.92],['minivan','carnival|odyssey|sienna|minivan|mpv',1.12,1.08],['van','van|transit|sprinter',1.16,1.15],['electric-suv','ev9|ioniq 5|model y|bz4x|ariya|id.4|ev6|mach-e|prologue|solterra',1.04,.98]];
     const profile=(()=>{let n=carData.name.toLowerCase();return GAME_PROFILES.find(p=>new RegExp(p[1]).test(n))||GAME_PROFILES[4]})();
@@ -108,21 +111,21 @@
     // The dashed lane marker is the single source of truth for wheel contact, items and collisions.
     const roadTop=()=>H-Math.max(105,H*.16),ground=()=>roadTop()+42,worldToScreen=x=>x-camera,worldY=y=>y;
     function seedRandom(n){const x=Math.sin(n*999.71+carData.index*31.7)*43758.5453;return x-Math.floor(x)}
-    function addObstacle(){let i=nextObstacleIndex++,r=seedRandom(i+300),type=r<.32?'energy':r<.52?'sky':r<.76?'honey':'trap';if(i<3&&type==='trap')type=i===1?'sky':'energy';let w=(type==='trap'?86:76)*ITEM_SCALE,h=(type==='trap'?76:type==='sky'?34:48)*ITEM_SCALE,half=w/2;nextObstacleX+=previousObstacleHalf+half+360+seedRandom(i)*720;obstacles.push({x:nextObstacleX,type,variant:seedRandom(i+700)>.5?1:0,used:false,w,h});previousObstacleHalf=half}
+    function addObstacle(){let i=nextObstacleIndex++,r=seedRandom(i+300),type=r<.32?'energy':r<.52?'sky':r<.76?'honey':'trap';if(i<3&&type==='trap')type=i===1?'sky':'energy';let w=(type==='trap'?86:76)*ITEM_SCALE,h=(type==='trap'?76:type==='sky'?34:48)*ITEM_SCALE,half=w/2;nextObstacleX+=previousObstacleHalf+half+180+seedRandom(i)*380;obstacles.push({x:nextObstacleX,type,variant:seedRandom(i+700)>.5?1:0,used:false,w,h});previousObstacleHalf=half}
     function ensureObstaclesAhead(){while(nextObstacleX<car.x+50000)addObstacle()}
     function buildObstacles(){obstacles=[];nextObstacleIndex=0;nextObstacleX=950;previousObstacleHalf=0;ensureObstaclesAhead()}
     const itemIcon=o=>o.type==='energy'?(o.variant?'🔋':'⛽'):o.type==='sky'?'🚀':o.type==='honey'?'🍯':'🌵';
     function updateItemQueue(force=false){let next=obstacles.filter(o=>!o.used&&o.x+o.w/2>=car.x-car.w/2).slice(0,5),signature=next.map(o=>`${o.x}:${o.type}:${o.variant}`).join('|')+`:${lang}`;if(!force&&signature===itemQueueSignature)return;itemQueueSignature=signature;let queue=$('#itemQueue');queue.replaceChildren();if(!next.length){let empty=document.createElement('span');empty.className='item-empty';empty.textContent=tx('noItems');queue.append(empty);return}next.forEach((o,index)=>{let slot=document.createElement('span'),number=document.createElement('small');slot.className=`item-slot ${o.type}`;slot.textContent=itemIcon(o);slot.title=tx(o.type);slot.setAttribute('aria-label',`${index+1}. ${tx(o.type)}`);number.className='item-number';number.textContent=index+1;slot.append(number);queue.append(slot)})}
-    function reset(){cancelAnimationFrame(raf);phase='angle';paused=false;resumeAfterRanking=false;angle=.45;angleDir=1;power=0;powerDir=1;holding=false;camera=LAUNCH_X-launchScreenX();time=0;blocked=false;bounces=0;rolling=false;bounceRecovery=null;truckX=-360;hitFlash=0;particles=[];car.x=LAUNCH_X;car.y=ground()-car.h/2;car.vx=car.vy=car.vr=car.rot=0;buildObstacles();itemQueueSignature='';updateItemQueue(true);$('#altitude').classList.remove('show');$('#resultOverlay').classList.add('hidden');$('#pauseOverlay').classList.add('hidden');$('#rankingOverlay').classList.add('hidden');$('#launchUi').classList.remove('hidden');$('#meterFill').style.width='0%';$('#distance').textContent=fmt(0);updateLaunchText();last=performance.now();raf=requestAnimationFrame(loop)}
+    function reset(){cancelAnimationFrame(raf);phase='angle';paused=false;resumeAfterRanking=false;angle=.45;angleDir=1;power=0;powerDir=1;holding=false;camera=LAUNCH_X-launchScreenX();time=0;blocked=false;bounces=0;rolling=false;truckX=-360;hitFlash=0;particles=[];car.x=LAUNCH_X;car.y=ground()-car.h/2;car.vx=car.vy=car.vr=car.rot=0;buildObstacles();itemQueueSignature='';updateItemQueue(true);$('#altitude').classList.remove('show');$('#resultOverlay').classList.add('hidden');$('#pauseOverlay').classList.add('hidden');$('#rankingOverlay').classList.add('hidden');$('#launchUi').classList.remove('hidden');$('#meterFill').style.width='0%';$('#distance').textContent=fmt(0);updateLaunchText();last=performance.now();raf=requestAnimationFrame(loop)}
     function updateLaunchText(){if(!$)return;let powerMode=phase==='power';$('#instruction').textContent=tx(powerMode?'powerHelp':'angleHelp');$('#holdBtn').textContent=tx(powerMode?'powerButton':'angleButton')}
     function startHold(e){e.preventDefault();if(!$('#rankingOverlay').classList.contains('hidden'))return;if(phase==='angle'){phase='power';power=0;powerDir=1;holding=true;updateLaunchText()}else if(phase==='power'&&!holding)holding=true}
     function endHold(e){if(e)e.preventDefault();if(phase==='power'&&holding){holding=false;launch()}}
     function cancelHold(){if(phase==='power'&&holding){holding=false;phase='angle';power=0;$('#meterFill').style.width='0%';updateLaunchText()}}
-    function launch(){phase='truck';$('#launchUi').classList.add('hidden');truckX=-380;setTimeout(()=>{if(phase!=='truck')return;phase='flight';rolling=false;lastEffectAt=-99;let speed=(520+power*720)*LAUNCH_SPEED_MULTIPLIER;car.vx=speed*Math.cos(angle);car.vy=-speed*Math.sin(angle);car.vr=6+power*10;burst(car.x-50,ground()-25,'#ffd23f',28);hitFlash=1},620/LAUNCH_SPEED_MULTIPLIER)}
+    function launch(){phase='truck';$('#launchUi').classList.add('hidden');truckX=-380;setTimeout(()=>{if(phase!=='truck')return;phase='flight';rolling=false;lastEffectAt=-99;let speed=(520+power*720)*LAUNCH_SPEED_MULTIPLIER;car.vx=speed*Math.cos(angle);car.vy=launchVerticalVelocity(speed,angle);car.vr=6+power*10;burst(car.x-50,ground()-25,'#ffd23f',28);hitFlash=1},620/LAUNCH_SPEED_MULTIPLIER)}
     function burst(x,y,color,count=14){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*330,vy:-Math.random()*260,life:.45+Math.random()*.5,color,size:3+Math.random()*7})}
     function toast(key){if(key==='groundHit'&&time-lastEffectAt<1.2)return;let el=$('#toast');el.textContent=tx(key);el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1500)}
     const carVerticalRadius=rotation=>Math.abs(Math.sin(rotation))*car.w/2+Math.abs(Math.cos(rotation))*car.h/2;
-    function collide(o,fromX=car.x){if(o.used)return false;let reach=(o.w+car.w)*.45,crossed=o.x>=Math.min(fromX,car.x)-reach&&o.x<=Math.max(fromX,car.x)+reach;if(crossed&&car.y+carVerticalRadius(car.rot)*.85>ground()-o.h){o.used=true;bounceRecovery=null;lastEffectAt=time;if(o.type==='trap'){rolling=false;car.vx*=.16;car.vy=-Math.max(260,Math.min(900,car.vx*.08));toast('trapHit');burst(car.x,ground()-40,'#ff4d4d',35)}else if(o.type==='honey'){car.vx*=.55;car.vy*=.7;toast('honeyHit');burst(car.x,ground()-20,'#f4b942',24)}else if(o.type==='sky'){rolling=false;let forwardSpeed=car.vx;car.vy=-2400;car.vx=Math.max(forwardSpeed,2600);car.vr=Math.max(MIN_AIR_SPIN,Math.abs(car.vr));toast('skyHit');burst(car.x,ground()-30,'#b96cff',90);hitFlash=1;$('#altitude').classList.add('show')}else{rolling=false;car.vx=Math.min(MAX_PLAYABLE_SPEED,car.vx*(1+.18*ITEM_EFFECT_MULTIPLIER));car.vy-=18*ITEM_EFFECT_MULTIPLIER;car.vr=Math.max(MIN_AIR_SPIN,Math.abs(car.vr));toast('energyHit');burst(car.x,ground()-28,o.variant?'#63d8ff':'#ffd23f',70);hitFlash=.7}updateItemQueue(true);return true}return false}
+    function collide(o,fromX=car.x){if(o.used)return false;let reach=(o.w+car.w)*.45,crossed=o.x>=Math.min(fromX,car.x)-reach&&o.x<=Math.max(fromX,car.x)+reach;if(crossed&&car.y+carVerticalRadius(car.rot)*.85>ground()-o.h){o.used=true;lastEffectAt=time;if(o.type==='trap'){rolling=false;car.vx*=.16;car.vy=-Math.max(260,Math.min(TRAP_ITEM_LIFT,car.vx*.08));toast('trapHit');burst(car.x,ground()-40,'#ff4d4d',35)}else if(o.type==='honey'){car.vx*=.55;car.vy*=.7;toast('honeyHit');burst(car.x,ground()-20,'#f4b942',24)}else if(o.type==='sky'){rolling=false;let forwardSpeed=car.vx;car.vy=-SKY_ITEM_LIFT;car.vx=Math.max(forwardSpeed,2600);car.vr=Math.max(MIN_AIR_SPIN,Math.abs(car.vr));toast('skyHit');burst(car.x,ground()-30,'#b96cff',90);hitFlash=1;$('#altitude').classList.add('show')}else{rolling=false;car.vx=Math.min(MAX_PLAYABLE_SPEED,car.vx*(1+.18*ITEM_EFFECT_MULTIPLIER));car.vy=Math.max(-SKY_ITEM_LIFT,car.vy-ENERGY_ITEM_LIFT);car.vr=Math.max(MIN_AIR_SPIN,Math.abs(car.vr));toast('energyHit');burst(car.x,ground()-28,o.variant?'#63d8ff':'#ffd23f',70);hitFlash=.7}updateItemQueue(true);return true}return false}
     function physics(dt){
       time+=dt;
       if(phase==='angle'){
@@ -139,18 +142,8 @@
         if(truckX>launchScreenX()-50)truckX=launchScreenX()-50;
       }else if(phase==='flight'){
         let previousX=car.x;
-        if(bounceRecovery){
-          bounceRecovery.elapsed=Math.min(bounceRecovery.duration,bounceRecovery.elapsed+dt);
-          let p=bounceRecovery.elapsed/bounceRecovery.duration,eased=p*p*(3-2*p),rise=bounceRecovery.lift*bounceRecovery.duration*(p*p*p-.5*p*p*p*p);
-          car.vy=-bounceRecovery.lift*eased;
-          car.vr*=Math.pow(.92,dt*60);
-          car.rot+=car.vr*dt;
-          let settleTarget=Math.round(car.rot/(Math.PI*2))*Math.PI*2;
-          car.rot+=(settleTarget-car.rot)*Math.min(1,dt*10);
-          car.y=ground()-carVerticalRadius(car.rot)-rise;
-          if(p>=1)bounceRecovery=null;
-        }else if(!rolling){
-          car.vy=Math.min(1050,car.vy+560*dt);
+        if(!rolling){
+          car.vy=Math.min(MAX_FALL_SPEED,car.vy+GRAVITY*dt);
           let spinDirection=car.vr<0?-1:1;
           car.vr=spinDirection*Math.max(MIN_AIR_SPIN,Math.abs(car.vr)*Math.pow(.9995,dt*60));
           car.rot+=car.vr*dt;
@@ -162,20 +155,18 @@
           car.rot+=(settleTarget-car.rot)*Math.min(1,dt*8);
         }
         car.x+=Math.max(0,car.vx)*dt;
-        car.vx*=Math.pow(rolling?.965:.999,dt*60);
+        car.vx=rolling?car.vx*Math.pow(ROLLING_DRAG_PER_FRAME,dt*60):airborneForwardVelocity(car.vx,dt);
         let floorRadius=carVerticalRadius(car.rot);
         if(rolling){
           car.y=ground()-floorRadius;
           if(car.vx<STOP_SPEED)finish(false);
-        }else if(!bounceRecovery&&car.y+floorRadius>=ground()){
+        }else if(car.y+floorRadius>=ground()){
           car.y=ground()-floorRadius;
-          let impactSpeed=Math.max(0,car.vy),shouldBounce=car.vx>MIN_BOUNCE_SPEED||impactSpeed>MIN_BOUNCE_IMPACT;
+          let impactSpeed=Math.max(0,car.vy),shouldBounce=bounces<MAX_GROUND_BOUNCES&&(car.vx>MIN_BOUNCE_SPEED||impactSpeed>MIN_BOUNCE_IMPACT);
           if(shouldBounce){
-            let bounceLift=Math.min(MAX_BOUNCE_LIFT,Math.max(MIN_BOUNCE_LIFT,impactSpeed*BOUNCE_RESTITUTION));
-            car.vy=0;
-            car.vx*=.88;
+            car.vy=bounceVerticalVelocity(impactSpeed);
+            car.vx*=HORIZONTAL_BOUNCE_RETENTION;
             car.vr=(car.vr<0?-1:1)*Math.max(2.6,Math.abs(car.vr)*.72);
-            bounceRecovery={elapsed:0,duration:BOUNCE_RECOVERY_TIME,lift:bounceLift};
             bounces++;
             burst(car.x,ground()-8,'#d59d61');
             toast('groundHit');
@@ -213,21 +204,33 @@
         item.append(position,name,score);list.append(item);
       });
     }
+    async function rankingRequest(options){
+      let response;
+      let headers=new Headers(options.headers||{});headers.set('X-Player-Token',rankingPlayerToken);
+      for(let attempt=0;attempt<2;attempt++){
+        response=await fetch('/api/rankings',{cache:'no-store',...options,headers});
+        if(response.ok||attempt>0||(response.status!==429&&response.status<500))break;
+      }
+      if(!response||!response.ok)throw new Error('ranking');
+      let data=await response.json();
+      if(!data||!Array.isArray(data.rankings))throw new Error('ranking');
+      return data;
+    }
     async function loadLeaderboard(){
       rankingLoading=true;rankingFailed=false;renderLeaderboard();
-      try{let response=await fetch('/api/rankings',{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('ranking');let data=await response.json();leaderboard=Array.isArray(data.rankings)?data.rankings:[];rankingFailed=false}
+      try{let data=await rankingRequest({headers:{Accept:'application/json'}});leaderboard=data.rankings;rankingFailed=false}
       catch(e){rankingFailed=true}
       finally{rankingLoading=false;renderLeaderboard()}
     }
     async function submitScore(score){
       rankingLoading=true;rankingFailed=false;renderLeaderboard();
-      try{let response=await fetch('/api/rankings',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({name:playerName,score,car:carData.name})});if(!response.ok)throw new Error('ranking');let data=await response.json();leaderboard=Array.isArray(data.rankings)?data.rankings:[];rankingFailed=false}
+      try{let data=await rankingRequest({method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({name:playerName,score,car:carData.name})});leaderboard=data.rankings;rankingFailed=false}
       catch(e){rankingFailed=true}
       finally{rankingLoading=false;renderLeaderboard()}
     }
     function openRankings(){if(phase!=='result'&&!paused){paused=true;resumeAfterRanking=true}else resumeAfterRanking=false;$('#rankingOverlay').classList.remove('hidden');loadLeaderboard()}
     function closeRankings(){$('#rankingOverlay').classList.add('hidden');if(resumeAfterRanking){paused=false;last=performance.now();resumeAfterRanking=false}}
-    function finish(crushed){if(phase==='result')return;phase='result';bounceRecovery=null;let dist=distanceMeters(),isNew=dist>best;if(isNew){best=dist;localStorage.setItem('carstudioSkyBest',String(best))}$('#best').textContent=fmt(best);$('#finalDistance').textContent=fmt(dist);$('#newRecord').textContent=tx(isNew?'newRecord':'record').replace('{d}',fmt(best));$('#resultCopy').textContent=tx('resultText').replace('{car}',carData.name).replace('{d}',fmt(dist));$('#resultOverlay').classList.remove('hidden');$('#shareBtn').dataset.distance=fmt(dist);submitScore(dist)}
+    function finish(crushed){if(phase==='result')return;phase='result';let dist=distanceMeters(),isNew=dist>best;if(isNew){best=dist;localStorage.setItem('carstudioSkyBest',String(best))}$('#best').textContent=fmt(best);$('#finalDistance').textContent=fmt(dist);$('#newRecord').textContent=tx(isNew?'newRecord':'record').replace('{d}',fmt(best));$('#resultCopy').textContent=tx('resultText').replace('{car}',carData.name).replace('{d}',fmt(dist));$('#resultOverlay').classList.remove('hidden');$('#shareBtn').dataset.distance=fmt(dist);submitScore(dist)}
     function rounded(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
     function drawSpeedLines(){if(phase!=='flight'||car.vx<700)return;ctx.save();let intensity=Math.min(1,car.vx/9000);ctx.globalAlpha=.12+.18*intensity;ctx.fillStyle='#fff';for(let i=0;i<9;i++){let y=55+seedRandom(i+810)*(H-150),len=20+seedRandom(i+850)*95,x=((seedRandom(i+890)*W-time*(180+seedRandom(i)*420))%(W+180)+W+180)%(W+180);ctx.beginPath();ctx.ellipse(x,y,len,1.2+seedRandom(i+910)*1.8,0,0,Math.PI*2);ctx.fill()}ctx.restore()}
     const BACKGROUND_SCENES=[

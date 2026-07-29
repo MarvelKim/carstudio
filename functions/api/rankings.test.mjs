@@ -1,13 +1,80 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { __test } from "./rankings.js";
+import { DatabaseSync } from "node:sqlite";
+import { __test, onRequestGet, onRequestPost } from "./rankings.js";
+
+class MemoryKV {
+  constructor() {
+    this.values = new Map();
+  }
+
+  async get(key) {
+    return this.values.get(key) ?? null;
+  }
+
+  async put(key, value) {
+    this.values.set(key, value);
+  }
+}
+
+class MemoryD1Statement {
+  constructor(statement) {
+    this.statement = statement;
+    this.parameters = [];
+  }
+
+  bind(...parameters) {
+    this.parameters = parameters;
+    return this;
+  }
+
+  async run() {
+    this.statement.run(...this.parameters);
+    return { success: true };
+  }
+
+  async all() {
+    return { results: this.statement.all(...this.parameters) };
+  }
+
+  async first() {
+    return this.statement.get(...this.parameters) ?? null;
+  }
+}
+
+class MemoryD1 {
+  constructor() {
+    this.database = new DatabaseSync(":memory:");
+  }
+
+  prepare(sql) {
+    return new MemoryD1Statement(this.database.prepare(sql));
+  }
+}
+
+const request = ({ token = "player-token-00000001", body, ip = "203.0.113.1" } = {}) =>
+  new Request("https://example.test/api/rankings", {
+    method: body ? "POST" : "GET",
+    headers: {
+      "CF-Connecting-IP": ip,
+      "Content-Type": "application/json",
+      "X-Player-Token": token
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+const postScore = (env, token, name, score) =>
+  onRequestPost({
+    env,
+    request: request({ token, body: { name, score, car: "Test Car" } })
+  });
 
 test("shows one distance-sorted global top 10", () => {
   const shards = Array.from({ length: 16 }, () => []);
   for (let index = 0; index < 12; index += 1) {
     shards[index % shards.length].push({
       id: `player-${index}`,
-      name: `이용자${index}`,
+      name: `Driver ${index}`,
       score: 100_000 + index,
       car: "Test Car",
       updatedAt: index
@@ -23,25 +90,93 @@ test("shows one distance-sorted global top 10", () => {
   assert.deepEqual(board.map((row) => row.rank), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
-test("reveals only the current IP player's name", () => {
+test("reveals only the current player's name", () => {
   const board = __test.publicBoard([[
-    { id: "mine", name: "김민수", score: 103_890, car: "A", updatedAt: 1 },
-    { id: "other", name: "박영희", score: 104_000, car: "B", updatedAt: 2 }
+    { id: "mine", name: "Alice", score: 103_890, car: "A", updatedAt: 1 },
+    { id: "other", name: "Bob", score: 104_000, car: "B", updatedAt: 2 }
   ]], "mine");
 
   assert.deepEqual(board.map(({ name, isMe }) => ({ name, isMe })), [
-    { name: "박**", isMe: false },
-    { name: "김민수", isMe: true }
+    { name: "B**", isMe: false },
+    { name: "Alice", isMe: true }
   ]);
 });
 
-test("keeps only one best record per IP", () => {
+test("keeps only one best record per player", () => {
   const board = __test.publicBoard([
-    [{ id: "same-ip", name: "이전", score: 10, updatedAt: 1 }],
-    [{ id: "same-ip", name: "신기록", score: 20, updatedAt: 2 }]
-  ], "same-ip");
+    [{ id: "same-player", name: "Before", score: 10, updatedAt: 1 }],
+    [{ id: "same-player", name: "Record", score: 20, updatedAt: 2 }]
+  ], "same-player");
 
   assert.equal(board.length, 1);
   assert.equal(board[0].score, 20);
-  assert.equal(board[0].name, "신기록");
+  assert.equal(board[0].name, "Record");
+});
+
+test("returns an actionable service error when KV is missing", async () => {
+  const response = await onRequestGet({ env: {}, request: request() });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: "Ranking storage is not configured",
+    code: "RANKING_STORAGE_UNAVAILABLE"
+  });
+});
+
+test("separates players on the same IP by stable browser token", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  await postScore(env, "same-network-player-a", "Alice", 120);
+  const response = await postScore(env, "same-network-player-b", "Bob", 150);
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload.rankings.map(({ name, score, isMe }) => ({ name, score, isMe })), [
+    { name: "Bob", score: 150, isMe: true },
+    { name: "A**", score: 120, isMe: false }
+  ]);
+});
+
+test("does not replace a player's best score with a lower retry", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  await postScore(env, "returning-player-0001", "Driver", 200);
+  const response = await postScore(env, "returning-player-0001", "Driver", 90);
+  const payload = await response.json();
+
+  assert.equal(payload.saved, false);
+  assert.equal(payload.best, 200);
+  assert.equal(payload.rankings[0].score, 200);
+  assert.equal(payload.rankings[0].isMe, true);
+});
+
+test("keeps concurrent submissions without overwriting another player", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  await Promise.all(Array.from({ length: 20 }, (_, index) =>
+    postScore(
+      env,
+      `concurrent-player-${String(index).padStart(4, "0")}`,
+      `Driver ${index}`,
+      index
+    )
+  ));
+
+  const count = env.GAME_RANKING_DB.database
+    .prepare("SELECT COUNT(*) AS count FROM minigame_rankings")
+    .get().count;
+  const response = await onRequestGet({ env, request: request() });
+  const payload = await response.json();
+
+  assert.equal(count, 20);
+  assert.equal(payload.rankings.length, 10);
+  assert.deepEqual(payload.rankings.map((row) => row.score), [
+    19, 18, 17, 16, 15, 14, 13, 12, 11, 10
+  ]);
+});
+
+test("keeps KV as a compatible fallback", async () => {
+  const env = { GAME_RANKING_KV: new MemoryKV(), RANKING_SALT: "test" };
+  const response = await postScore(env, "kv-fallback-player-01", "KV Driver", 42);
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.rankings[0].name, "KV Driver");
+  assert.equal(payload.rankings[0].score, 42);
 });

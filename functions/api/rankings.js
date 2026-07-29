@@ -3,6 +3,7 @@ const SHARD_LIMIT = 10;
 const BOARD_LIMIT = 10;
 const MAX_NAME_LENGTH = 40;
 const MAX_SCORE = 1_000_000_000;
+const PLAYER_TOKEN_HEADER = "X-Player-Token";
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -13,7 +14,15 @@ const json = (body, status = 200) =>
     }
   });
 
-const getStore = (env) => env.GAME_RANKING_KV || env.VISITOR_KV;
+const getDatabase = (env) => env.GAME_RANKING_DB;
+const getKvStore = (env) => env.GAME_RANKING_KV || env.VISITOR_KV;
+const databaseSchemas = new WeakMap();
+
+const storageUnavailable = () =>
+  json({
+    error: "Ranking storage is not configured",
+    code: "RANKING_STORAGE_UNAVAILABLE"
+  }, 503);
 
 const getClientIp = (request) =>
   request.headers.get("CF-Connecting-IP") ||
@@ -28,8 +37,16 @@ const hashText = async (value) => {
     .join("");
 };
 
-const getPlayerId = (request, env) =>
-  hashText(`${env.RANKING_SALT || "carstudio-sky-launch-v1"}|${getClientIp(request)}`);
+const normalizePlayerToken = (value) => {
+  const token = String(value || "").trim();
+  return /^[A-Za-z0-9_-]{16,128}$/.test(token) ? token : "";
+};
+
+const getPlayerId = (request, env) => {
+  const token = normalizePlayerToken(request.headers.get(PLAYER_TOKEN_HEADER));
+  const identity = token ? `token:${token}` : `ip:${getClientIp(request)}`;
+  return hashText(`${env.RANKING_SALT || "carstudio-sky-launch-v1"}|${identity}`);
+};
 
 const normalizeName = (value) =>
   String(value || "")
@@ -46,6 +63,29 @@ const maskName = (name) => {
 };
 
 const shardKey = (index) => `minigame:ranking:v1:${index.toString(16)}`;
+
+const ensureDatabaseSchema = (database) => {
+  let setup = databaseSchemas.get(database);
+  if (!setup) {
+    setup = (async () => {
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS minigame_rankings (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          score REAL NOT NULL,
+          car TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      `).run();
+      await database.prepare(`
+        CREATE INDEX IF NOT EXISTS minigame_rankings_score
+        ON minigame_rankings (score DESC, updated_at ASC)
+      `).run();
+    })();
+    databaseSchemas.set(database, setup);
+  }
+  return setup;
+};
 
 const readShard = async (store, index) => {
   try {
@@ -86,7 +126,7 @@ const publicBoard = (shards, playerId) => {
     }));
 };
 
-const loadBoard = async (store, playerId, knownShardIndex = -1, knownShard = null) => {
+const loadKvBoard = async (store, playerId, knownShardIndex = -1, knownShard = null) => {
   const shards = await Promise.all(
     Array.from({ length: SHARD_COUNT }, (_, index) =>
       index === knownShardIndex ? knownShard : readShard(store, index)
@@ -95,19 +135,62 @@ const loadBoard = async (store, playerId, knownShardIndex = -1, knownShard = nul
   return publicBoard(shards, playerId);
 };
 
+const loadDatabaseBoard = async (database, playerId) => {
+  await ensureDatabaseSchema(database);
+  const result = await database.prepare(`
+    SELECT id, name, score, car, updated_at AS updatedAt
+    FROM minigame_rankings
+    ORDER BY score DESC, updated_at ASC
+    LIMIT ?
+  `).bind(BOARD_LIMIT).all();
+  return publicBoard([result.results || []], playerId);
+};
+
+const saveDatabaseScore = async (database, playerId, name, score, car) => {
+  await ensureDatabaseSchema(database);
+  const updatedAt = Date.now();
+  await database.prepare(`
+    INSERT INTO minigame_rankings (id, name, score, car, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      name = CASE
+        WHEN excluded.score >= minigame_rankings.score THEN excluded.name
+        ELSE minigame_rankings.name
+      END,
+      score = MAX(minigame_rankings.score, excluded.score),
+      car = CASE
+        WHEN excluded.score >= minigame_rankings.score THEN excluded.car
+        ELSE minigame_rankings.car
+      END,
+      updated_at = CASE
+        WHEN excluded.score > minigame_rankings.score THEN excluded.updated_at
+        ELSE minigame_rankings.updated_at
+      END
+  `).bind(playerId, name, score, car, updatedAt).run();
+  const best = await database.prepare(`
+    SELECT score FROM minigame_rankings WHERE id = ?
+  `).bind(playerId).first();
+  return Number(best.score);
+};
+
 export async function onRequestGet({ request, env }) {
-  const store = getStore(env);
-  if (!store) return json({ error: "Ranking KV is not configured" }, 500);
+  const database = getDatabase(env);
+  const store = getKvStore(env);
+  if (!database && !store) return storageUnavailable();
 
   const playerId = await getPlayerId(request, env);
-  return json({ rankings: await loadBoard(store, playerId) });
+  const rankings = database
+    ? await loadDatabaseBoard(database, playerId)
+    : await loadKvBoard(store, playerId);
+  return json({ rankings });
 }
 
-export const __test = { maskName, publicBoard };
+export const __test = { getPlayerId, maskName, normalizePlayerToken, publicBoard };
 
 export async function onRequestPost({ request, env }) {
-  const store = getStore(env);
-  if (!store) return json({ error: "Ranking KV is not configured" }, 500);
+  const database = getDatabase(env);
+  const store = getKvStore(env);
+  if (!database && !store) return storageUnavailable();
 
   let payload;
   try {
@@ -125,15 +208,25 @@ export async function onRequestPost({ request, env }) {
   }
 
   const playerId = await getPlayerId(request, env);
+  if (database) {
+    const best = await saveDatabaseScore(database, playerId, name, score, car);
+    return json({
+      saved: best === score,
+      best,
+      rankings: await loadDatabaseBoard(database, playerId)
+    });
+  }
+
   const shardIndex = Number.parseInt(playerId[0], 16) % SHARD_COUNT;
   const shard = await readShard(store, shardIndex);
   const previous = shard.find((row) => row.id === playerId);
+  const replacesBest = !previous || score >= previous.score;
   const next = {
     id: playerId,
-    name: score >= (previous?.score ?? -1) ? name : previous.name,
+    name: replacesBest ? name : previous.name,
     score: Math.max(score, previous?.score ?? 0),
-    car: score >= (previous?.score ?? -1) ? car : previous.car,
-    updatedAt: Date.now()
+    car: replacesBest ? car : previous.car,
+    updatedAt: previous && score <= previous.score ? previous.updatedAt : Date.now()
   };
   const updatedShard = sortRows(shard.filter((row) => row.id !== playerId).concat(next)).slice(0, SHARD_LIMIT);
   await store.put(shardKey(shardIndex), JSON.stringify(updatedShard));
@@ -141,6 +234,6 @@ export async function onRequestPost({ request, env }) {
   return json({
     saved: next.score === score,
     best: next.score,
-    rankings: await loadBoard(store, playerId, shardIndex, updatedShard)
+    rankings: await loadKvBoard(store, playerId, shardIndex, updatedShard)
   });
 }
