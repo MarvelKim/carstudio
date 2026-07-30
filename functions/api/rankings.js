@@ -62,24 +62,36 @@ const maskName = (name) => {
   return characters[0] + "**";
 };
 
-const shardKey = (index) => `minigame:ranking:v1:${index.toString(16)}`;
+const padMonth = (month) => String(month).padStart(2, "0");
+const currentPeriod = (now = new Date()) => {
+  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return `${koreaTime.getUTCFullYear()}-${padMonth(koreaTime.getUTCMonth() + 1)}`;
+};
+const periodYear = (period) => Number(period.slice(0, 4));
+const yearPeriods = (year) =>
+  Array.from({ length: 12 }, (_, month) => `${year}-${padMonth(month + 1)}`);
+const shardKey = (period, index) =>
+  `minigame:ranking:v2:${period}:${index.toString(16)}`;
+const winnerKey = (period) => `minigame:winner:v2:${period}`;
 
 const ensureDatabaseSchema = (database) => {
   let setup = databaseSchemas.get(database);
   if (!setup) {
     setup = (async () => {
       await database.prepare(`
-        CREATE TABLE IF NOT EXISTS minigame_rankings (
-          id TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS minigame_monthly_rankings (
+          period TEXT NOT NULL,
+          id TEXT NOT NULL,
           name TEXT NOT NULL,
           score REAL NOT NULL,
           car TEXT NOT NULL,
-          updated_at INTEGER NOT NULL
+          updated_at INTEGER NOT NULL,
+          PRIMARY KEY (period, id)
         )
       `).run();
       await database.prepare(`
-        CREATE INDEX IF NOT EXISTS minigame_rankings_score
-        ON minigame_rankings (score DESC, updated_at ASC)
+        CREATE INDEX IF NOT EXISTS minigame_monthly_rankings_score
+        ON minigame_monthly_rankings (period, score DESC, updated_at ASC)
       `).run();
     })();
     databaseSchemas.set(database, setup);
@@ -87,9 +99,9 @@ const ensureDatabaseSchema = (database) => {
   return setup;
 };
 
-const readShard = async (store, index) => {
+const readShard = async (store, period, index) => {
   try {
-    const raw = await store.get(shardKey(index));
+    const raw = await store.get(shardKey(period, index));
     if (!raw) return [];
     const rows = JSON.parse(raw);
     return Array.isArray(rows) ? rows : [];
@@ -126,52 +138,91 @@ const publicBoard = (shards, playerId) => {
     }));
 };
 
-const loadKvBoard = async (store, playerId, knownShardIndex = -1, knownShard = null) => {
+const loadKvBoard = async (store, playerId, period, knownShardIndex = -1, knownShard = null) => {
   const shards = await Promise.all(
     Array.from({ length: SHARD_COUNT }, (_, index) =>
-      index === knownShardIndex ? knownShard : readShard(store, index)
+      index === knownShardIndex ? knownShard : readShard(store, period, index)
     )
   );
   return publicBoard(shards, playerId);
 };
 
-const loadDatabaseBoard = async (database, playerId) => {
+const loadDatabaseBoard = async (database, playerId, period) => {
   await ensureDatabaseSchema(database);
   const result = await database.prepare(`
     SELECT id, name, score, car, updated_at AS updatedAt
-    FROM minigame_rankings
+    FROM minigame_monthly_rankings
+    WHERE period = ?
     ORDER BY score DESC, updated_at ASC
     LIMIT ?
-  `).bind(BOARD_LIMIT).all();
+  `).bind(period, BOARD_LIMIT).all();
   return publicBoard([result.results || []], playerId);
 };
 
-const saveDatabaseScore = async (database, playerId, name, score, car) => {
+const saveDatabaseScore = async (database, playerId, name, score, car, period) => {
   await ensureDatabaseSchema(database);
   const updatedAt = Date.now();
   await database.prepare(`
-    INSERT INTO minigame_rankings (id, name, score, car, updated_at)
-    VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
+    INSERT INTO minigame_monthly_rankings (period, id, name, score, car, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(period, id) DO UPDATE SET
       name = CASE
-        WHEN excluded.score >= minigame_rankings.score THEN excluded.name
-        ELSE minigame_rankings.name
+        WHEN excluded.score >= minigame_monthly_rankings.score THEN excluded.name
+        ELSE minigame_monthly_rankings.name
       END,
-      score = MAX(minigame_rankings.score, excluded.score),
+      score = MAX(minigame_monthly_rankings.score, excluded.score),
       car = CASE
-        WHEN excluded.score >= minigame_rankings.score THEN excluded.car
-        ELSE minigame_rankings.car
+        WHEN excluded.score >= minigame_monthly_rankings.score THEN excluded.car
+        ELSE minigame_monthly_rankings.car
       END,
       updated_at = CASE
-        WHEN excluded.score > minigame_rankings.score THEN excluded.updated_at
-        ELSE minigame_rankings.updated_at
+        WHEN excluded.score > minigame_monthly_rankings.score THEN excluded.updated_at
+        ELSE minigame_monthly_rankings.updated_at
       END
-  `).bind(playerId, name, score, car, updatedAt).run();
+  `).bind(period, playerId, name, score, car, updatedAt).run();
   const best = await database.prepare(`
-    SELECT score FROM minigame_rankings WHERE id = ?
-  `).bind(playerId).first();
+    SELECT score FROM minigame_monthly_rankings WHERE period = ? AND id = ?
+  `).bind(period, playerId).first();
   return Number(best.score);
 };
+
+const loadDatabaseHallOfFame = async (database, playerId, year) => {
+  await ensureDatabaseSchema(database);
+  const result = await database.prepare(`
+    SELECT period, id, name, score, car, updatedAt FROM (
+      SELECT period, id, name, score, car, updated_at AS updatedAt,
+        ROW_NUMBER() OVER (PARTITION BY period ORDER BY score DESC, updated_at ASC) AS monthly_rank
+      FROM minigame_monthly_rankings
+      WHERE period >= ? AND period <= ?
+    )
+    WHERE monthly_rank = 1
+    ORDER BY period ASC
+  `).bind(`${year}-01`, `${year}-12`).all();
+  const winners = new Map();
+  for (const row of result.results || []) if (!winners.has(row.period)) winners.set(row.period, row);
+  return yearPeriods(year).map((period) => {
+    const row = winners.get(period);
+    return row ? { period, rank: 1, name: row.id === playerId ? row.name : maskName(row.name), score: row.score, car: row.car, isMe: row.id === playerId } : { period, rank: 1, empty: true };
+  });
+};
+
+const loadKvHallOfFame = async (store, playerId, year) =>
+  Promise.all(yearPeriods(year).map(async (period) => {
+    let winner = null;
+    try { winner = JSON.parse(await store.get(winnerKey(period))); } catch (_) {}
+    return winner ? { period, rank: 1, name: winner.id === playerId ? winner.name : maskName(winner.name), score: winner.score, car: winner.car, isMe: winner.id === playerId } : { period, rank: 1, empty: true };
+  }));
+
+const responseData = async (database, store, playerId, period) => ({
+  period,
+  year: periodYear(period),
+  rankings: database
+    ? await loadDatabaseBoard(database, playerId, period)
+    : await loadKvBoard(store, playerId, period),
+  hallOfFame: database
+    ? await loadDatabaseHallOfFame(database, playerId, periodYear(period))
+    : await loadKvHallOfFame(store, playerId, periodYear(period))
+});
 
 export async function onRequestGet({ request, env }) {
   const database = getDatabase(env);
@@ -179,13 +230,11 @@ export async function onRequestGet({ request, env }) {
   if (!database && !store) return storageUnavailable();
 
   const playerId = await getPlayerId(request, env);
-  const rankings = database
-    ? await loadDatabaseBoard(database, playerId)
-    : await loadKvBoard(store, playerId);
-  return json({ rankings });
+  const period = currentPeriod();
+  return json(await responseData(database, store, playerId, period));
 }
 
-export const __test = { getPlayerId, maskName, normalizePlayerToken, publicBoard };
+export const __test = { currentPeriod, getPlayerId, maskName, normalizePlayerToken, publicBoard };
 
 export async function onRequestPost({ request, env }) {
   const database = getDatabase(env);
@@ -208,17 +257,18 @@ export async function onRequestPost({ request, env }) {
   }
 
   const playerId = await getPlayerId(request, env);
+  const period = currentPeriod();
   if (database) {
-    const best = await saveDatabaseScore(database, playerId, name, score, car);
+    const best = await saveDatabaseScore(database, playerId, name, score, car, period);
     return json({
       saved: best === score,
       best,
-      rankings: await loadDatabaseBoard(database, playerId)
+      ...await responseData(database, store, playerId, period)
     });
   }
 
   const shardIndex = Number.parseInt(playerId[0], 16) % SHARD_COUNT;
-  const shard = await readShard(store, shardIndex);
+  const shard = await readShard(store, period, shardIndex);
   const previous = shard.find((row) => row.id === playerId);
   const replacesBest = !previous || score >= previous.score;
   const next = {
@@ -229,11 +279,17 @@ export async function onRequestPost({ request, env }) {
     updatedAt: previous && score <= previous.score ? previous.updatedAt : Date.now()
   };
   const updatedShard = sortRows(shard.filter((row) => row.id !== playerId).concat(next)).slice(0, SHARD_LIMIT);
-  await store.put(shardKey(shardIndex), JSON.stringify(updatedShard));
+  await store.put(shardKey(period, shardIndex), JSON.stringify(updatedShard));
+  let previousWinner = null;
+  try { previousWinner = JSON.parse(await store.get(winnerKey(period))); } catch (_) {}
+  if (!previousWinner || next.score > previousWinner.score ||
+      (next.score === previousWinner.score && next.updatedAt < previousWinner.updatedAt)) {
+    await store.put(winnerKey(period), JSON.stringify(next));
+  }
 
   return json({
     saved: next.score === score,
     best: next.score,
-    rankings: await loadKvBoard(store, playerId, shardIndex, updatedShard)
+    ...await responseData(null, store, playerId, period)
   });
 }

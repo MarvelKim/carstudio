@@ -69,6 +69,11 @@ const postScore = (env, token, name, score) =>
     request: request({ token, body: { name, score, car: "Test Car" } })
   });
 
+test("uses Korea time for monthly ranking boundaries", () => {
+  assert.equal(__test.currentPeriod(new Date("2026-07-31T14:59:59Z")), "2026-07");
+  assert.equal(__test.currentPeriod(new Date("2026-07-31T15:00:00Z")), "2026-08");
+});
+
 test("shows one distance-sorted global top 10", () => {
   const shards = Array.from({ length: 16 }, () => []);
   for (let index = 0; index < 12; index += 1) {
@@ -159,7 +164,7 @@ test("keeps concurrent submissions without overwriting another player", async ()
   ));
 
   const count = env.GAME_RANKING_DB.database
-    .prepare("SELECT COUNT(*) AS count FROM minigame_rankings")
+    .prepare("SELECT COUNT(*) AS count FROM minigame_monthly_rankings")
     .get().count;
   const response = await onRequestGet({ env, request: request() });
   const payload = await response.json();
@@ -179,4 +184,23 @@ test("keeps KV as a compatible fallback", async () => {
   assert.equal(response.status, 200);
   assert.equal(payload.rankings[0].name, "KV Driver");
   assert.equal(payload.rankings[0].score, 42);
+  assert.equal(payload.period, __test.currentPeriod());
+  assert.equal(payload.hallOfFame.length, 12);
+  const currentMonth = Number(payload.period.slice(5, 7)) - 1;
+  assert.equal(payload.hallOfFame[currentMonth].name, "KV Driver");
+  assert.equal(payload.hallOfFame[currentMonth].rank, 1);
+});
+
+test("returns twelve monthly hall-of-fame slots and the current winner", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  const response = await postScore(env, "hall-of-fame-player", "Champion", 777);
+  const payload = await response.json();
+  const currentMonth = Number(payload.period.slice(5, 7)) - 1;
+
+  assert.equal(payload.hallOfFame.length, 12);
+  assert.deepEqual(payload.hallOfFame.map((row) => row.period),
+    Array.from({ length: 12 }, (_, index) => `${payload.year}-${String(index + 1).padStart(2, "0")}`));
+  assert.equal(payload.hallOfFame[currentMonth].name, "Champion");
+  assert.equal(payload.hallOfFame[currentMonth].score, 777);
+  assert.equal(payload.hallOfFame.filter((row) => row.empty).length, 11);
 });
