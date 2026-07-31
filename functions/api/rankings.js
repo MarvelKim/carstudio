@@ -4,6 +4,7 @@ const BOARD_LIMIT = 10;
 const MAX_NAME_LENGTH = 40;
 const MAX_SCORE = 1_000_000_000;
 const PLAYER_TOKEN_HEADER = "X-Player-Token";
+const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -67,6 +68,13 @@ const currentPeriod = (now = new Date()) => {
   const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return `${koreaTime.getUTCFullYear()}-${padMonth(koreaTime.getUTCMonth() + 1)}`;
 };
+const previousPeriod = (now = new Date()) => {
+  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return koreaTime.getUTCMonth() === 0
+    ? `${koreaTime.getUTCFullYear() - 1}-12`
+    : `${koreaTime.getUTCFullYear()}-${padMonth(koreaTime.getUTCMonth())}`;
+};
+const isValidPeriod = (period) => PERIOD_PATTERN.test(period);
 const periodYear = (period) => Number(period.slice(0, 4));
 const yearPeriods = (year) =>
   Array.from({ length: 12 }, (_, month) => `${year}-${padMonth(month + 1)}`);
@@ -230,11 +238,24 @@ export async function onRequestGet({ request, env }) {
   if (!database && !store) return storageUnavailable();
 
   const playerId = await getPlayerId(request, env);
-  const period = currentPeriod();
+  const requestedPeriod = new URL(request.url).searchParams.get("period");
+  const period = requestedPeriod || currentPeriod();
+  if (!isValidPeriod(period) || period > currentPeriod()) {
+    return json({ error: "period must be a current or past month in YYYY-MM format" }, 400);
+  }
   return json(await responseData(database, store, playerId, period));
 }
 
-export const __test = { currentPeriod, getPlayerId, maskName, normalizePlayerToken, publicBoard };
+export const __test = { currentPeriod, getPlayerId, isValidPeriod, maskName, normalizePlayerToken, previousPeriod, publicBoard };
+export const __reporting = {
+  currentPeriod,
+  getDatabase,
+  getKvStore,
+  isValidPeriod,
+  loadDatabaseBoard,
+  loadKvBoard,
+  previousPeriod
+};
 
 export async function onRequestPost({ request, env }) {
   const database = getDatabase(env);

@@ -1,0 +1,49 @@
+name: Monthly ranking report
+
+on:
+  schedule:
+    # 00:20 KST on possible first days of a month (GitHub cron uses UTC).
+    - cron: "20 15 28-31 * *"
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Completed month to resend (YYYY-MM); blank uses last month"
+        required: false
+        type: string
+      force:
+        description: "Send again even if this month was already delivered"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send finalized TOP 10 to Telegram
+        env:
+          CONFIGURED_ENDPOINT: ${{ vars.MONTHLY_REPORT_ENDPOINT }}
+          REPORT_SECRET: ${{ secrets.MONTHLY_REPORT_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_PERIOD: ${{ inputs.period }}
+          FORCE_REPORT: ${{ inputs.force }}
+        run: |
+          endpoint="${CONFIGURED_ENDPOINT:-https://carstudio-dye.pages.dev/api/monthly-report}"
+          if [ -z "$REPORT_SECRET" ]; then
+            echo "MONTHLY_REPORT_SECRET is not configured in GitHub Actions."
+            exit 1
+          fi
+          payload='{}'
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            period="${REQUESTED_PERIOD:-$(TZ=Asia/Seoul date -d 'last month' +%Y-%m)}"
+            payload="$(jq -n --arg period "$period" --argjson force "${FORCE_REPORT:-false}" '{period:$period,force:$force}')"
+          fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $REPORT_SECRET" \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$endpoint"

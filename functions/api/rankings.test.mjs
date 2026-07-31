@@ -52,8 +52,8 @@ class MemoryD1 {
   }
 }
 
-const request = ({ token = "player-token-00000001", body, ip = "203.0.113.1" } = {}) =>
-  new Request("https://example.test/api/rankings", {
+const request = ({ token = "player-token-00000001", body, ip = "203.0.113.1", url = "https://example.test/api/rankings" } = {}) =>
+  new Request(url, {
     method: body ? "POST" : "GET",
     headers: {
       "CF-Connecting-IP": ip,
@@ -72,6 +72,17 @@ const postScore = (env, token, name, score) =>
 test("uses Korea time for monthly ranking boundaries", () => {
   assert.equal(__test.currentPeriod(new Date("2026-07-31T14:59:59Z")), "2026-07");
   assert.equal(__test.currentPeriod(new Date("2026-07-31T15:00:00Z")), "2026-08");
+  assert.equal(__test.previousPeriod(new Date("2026-01-01T00:00:00Z")), "2025-12");
+  assert.equal(__test.previousPeriod(new Date("2026-07-31T15:00:00Z")), "2026-07");
+});
+
+test("rejects invalid or future historical periods", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  const response = await onRequestGet({
+    env,
+    request: request({ url: "https://example.test/api/rankings?period=9999-12" })
+  });
+  assert.equal(response.status, 400);
 });
 
 test("shows one distance-sorted global top 10", () => {
@@ -150,6 +161,27 @@ test("does not replace a player's best score with a lower retry", async () => {
   assert.equal(payload.best, 200);
   assert.equal(payload.rankings[0].score, 200);
   assert.equal(payload.rankings[0].isMe, true);
+});
+
+test("loads a completed month for the public report page", async () => {
+  const env = { GAME_RANKING_DB: new MemoryD1(), RANKING_SALT: "test" };
+  await postScore(env, "schema-player-token", "Current", 1);
+  const period = __test.previousPeriod();
+  env.GAME_RANKING_DB.database.prepare(`
+    INSERT INTO minigame_monthly_rankings (period, id, name, score, car, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(period, "historical-player", "Archive Driver", 4321, "Archive Car", 1);
+
+  const response = await onRequestGet({
+    env,
+    request: request({ url: `https://example.test/api/rankings?period=${period}` })
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.period, period);
+  assert.equal(payload.rankings[0].name, "A**");
+  assert.equal(payload.rankings[0].score, 4321);
 });
 
 test("keeps concurrent submissions without overwriting another player", async () => {
