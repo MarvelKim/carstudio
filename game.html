@@ -48,17 +48,17 @@
     .toast.show{translate:-50% -50%;transform:scale(1)}
     .ranking-card{width:min(600px,100%);padding:23px}.ranking-card h1{margin:9px 0 12px;font-size:clamp(28px,6vw,44px)}
     .ranking-state{margin:18px 0;color:#637083;font-weight:900}.ranking-list{display:grid;gap:6px;max-height:min(52vh,430px);margin:0;padding:0;overflow-y:auto;list-style:none;text-align:left}
-    .ranking-row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:42px;padding:7px 10px;border:2px solid #d8dde5;border-radius:10px;background:#fff;font-weight:900}
+    .ranking-row{display:grid;grid-template-columns:36px minmax(70px,.75fr) 68px minmax(100px,1fr) auto;align-items:center;gap:9px;min-height:48px;padding:5px 10px;border:2px solid #d8dde5;border-radius:10px;background:#fff;font-weight:900}
     .ranking-row.is-me{border-color:var(--blue);background:#eaf4ff}.ranking-position{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#edf0f5;font-size:15px;line-height:1;font-weight:1000}.ranking-row:nth-child(1) .ranking-position{background:var(--yellow)}
-    .ranking-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ranking-you{margin-left:6px;color:var(--blue);font-size:10px}.ranking-score{color:var(--red);white-space:nowrap}.ranking-close{width:100%;margin-top:13px}
+    .ranking-name,.ranking-car-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ranking-car-name{color:#637083;font-size:12px}.ranking-car-image{position:relative;display:grid;place-items:center;width:68px;height:38px;border-radius:8px;background:#f5f7fa;overflow:hidden}.ranking-car-image::before{content:'🚗';font-size:21px;opacity:.45}.ranking-car-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.ranking-you{margin-left:6px;color:var(--blue);font-size:10px}.ranking-score{color:var(--red);white-space:nowrap}.ranking-close{width:100%;margin-top:13px}
     .ranking-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}.ranking-tab{min-height:38px;border:2px solid var(--line);border-radius:10px;background:#fff;font-weight:1000;cursor:pointer}.ranking-tab.active{background:var(--yellow);box-shadow:2px 2px 0 var(--line)}
     .ranking-crown{--crown-main:#ffd23f;--crown-dark:#e6a800;--crown-light:#fff1a6;display:grid;place-items:center;width:30px;height:30px;filter:drop-shadow(0 1px 0 rgba(20,33,61,.3))}.ranking-crown svg{display:block;width:29px;height:25px;overflow:visible}.ranking-crown .crown-main{fill:var(--crown-main)}.ranking-crown .crown-dark{fill:var(--crown-dark)}.ranking-crown .crown-light{fill:var(--crown-light)}.ranking-crown .crown-outline{stroke:var(--line);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.ranking-crown.silver{--crown-main:#d9e0e9;--crown-dark:#8b98a9;--crown-light:#fff}.ranking-crown.bronze{--crown-main:#cd7f45;--crown-dark:#8f4d2d;--crown-light:#f1bc8e}
-    .hall-list .ranking-row{grid-template-columns:48px 30px minmax(0,1fr) auto}.hall-month{font-size:12px;color:#637083;text-align:center}.ranking-row.is-empty{color:#8c95a3}.ranking-row.is-empty .ranking-score{color:#8c95a3}
+    .hall-list .ranking-row{grid-template-columns:48px 30px minmax(70px,.75fr) 68px minmax(100px,1fr) auto}.hall-month{font-size:12px;color:#637083;text-align:center}.ranking-row.is-empty{color:#8c95a3}.ranking-row.is-empty .ranking-position{background:#edf0f5}.ranking-row.is-empty .ranking-car-image{opacity:.45}.ranking-row.is-empty .ranking-score{color:#8c95a3}
     #resultRankBtn{grid-column:1/-1}.ranking-error{color:#c03636}
     html.mobile-landscape .toast{top:50%;translate:-50% -50%;padding:8px 12px;font-size:12px}
-    html.mobile-landscape .ranking-card{width:min(500px,94%);padding:10px 13px}html.mobile-landscape .ranking-card h1{margin:4px 0 7px;font-size:23px}html.mobile-landscape .ranking-list{gap:3px;max-height:48vh}html.mobile-landscape .ranking-row{min-height:29px;padding:3px 7px;border-width:1px;font-size:10px}html.mobile-landscape .ranking-position{width:22px;height:22px;font-size:12px}html.mobile-landscape .ranking-crown{width:24px;height:24px}html.mobile-landscape .ranking-crown svg{width:23px;height:20px}html.mobile-landscape .ranking-close{margin-top:6px}
+    html.mobile-landscape .ranking-card{width:min(600px,96%);padding:10px 13px}html.mobile-landscape .ranking-card h1{margin:4px 0 7px;font-size:23px}html.mobile-landscape .ranking-list{gap:3px;max-height:48vh}html.mobile-landscape .ranking-row{grid-template-columns:24px minmax(48px,.7fr) 45px minmax(64px,1fr) auto;min-height:31px;padding:2px 6px;border-width:1px;font-size:10px}html.mobile-landscape .hall-list .ranking-row{grid-template-columns:34px 24px minmax(48px,.7fr) 45px minmax(64px,1fr) auto}html.mobile-landscape .ranking-position{width:22px;height:22px;font-size:12px}html.mobile-landscape .ranking-crown{width:24px;height:24px}html.mobile-landscape .ranking-crown svg{width:23px;height:20px}html.mobile-landscape .ranking-car-image{width:45px;height:27px;border-radius:5px}html.mobile-landscape .ranking-car-name{font-size:9px}html.mobile-landscape .ranking-close{margin-top:6px}
     html.mobile-landscape .item-slot:nth-child(4)::after{content:''}
-    @media(max-width:650px){.item-slot:nth-child(4)::after{content:''}.ranking-card{padding:17px}.ranking-list{max-height:46vh}.ranking-row{grid-template-columns:31px minmax(0,1fr) auto;padding:6px 8px;font-size:12px}}
+    @media(max-width:650px){.item-slot:nth-child(4)::after{content:''}.ranking-card{padding:17px}.ranking-list{max-height:46vh}.ranking-row{grid-template-columns:31px minmax(54px,.7fr) 50px minmax(70px,1fr) auto;padding:5px 7px;font-size:12px}.hall-list .ranking-row{grid-template-columns:38px 28px minmax(54px,.7fr) 50px minmax(70px,1fr) auto}.ranking-car-image{width:50px;height:30px}.ranking-car-name{font-size:10px}}
   </style>
 </head>
 <body>
@@ -76,6 +76,7 @@
   <div class="overlay hidden" id="pauseOverlay"><div class="card"><span class="badge" data-t="paused">잠시 정차 중</span><h1 data-t="pausedTitle">PAUSED</h1><p data-t="pausedDesc">준비되면 다시 출발하세요.</p><button class="btn primary" id="resumeBtn" data-t="resume">계속하기</button></div></div>
   <div class="overlay hidden" id="resultOverlay"><div class="card"><span class="badge" data-t="result">주행 결과</span><h1 id="finalDistance">0 m</h1><div class="record" id="newRecord"></div><p id="resultCopy"></p><div class="actions"><button class="btn primary" id="againBtn" data-t="retry">재도전</button><button class="btn" id="shareBtn" data-t="share">기록 공유하기</button><button class="btn" id="resultRankBtn">🏆 <span data-t="viewTop10">전체 TOP 10 보기</span></button></div></div></div>
   <div class="overlay hidden" id="rankingOverlay" role="dialog" aria-modal="true" aria-labelledby="rankingTitle"><div class="card ranking-card"><span class="badge" data-t="globalRanking">전체 사용자 랭킹</span><h1 id="rankingTitle">이달의 TOP 10</h1><div class="ranking-tabs" role="tablist"><button class="ranking-tab active" id="monthlyRankTab" role="tab" aria-selected="true" data-t="monthlyRanking">월별 랭킹</button><button class="ranking-tab" id="hallRankTab" role="tab" aria-selected="false" data-t="hallOfFame">명예의 전당</button></div><p class="ranking-state" id="rankingState" data-t="rankingLoading">랭킹을 불러오는 중...</p><ol class="ranking-list" id="rankingList"></ol><button class="btn ranking-close" id="rankingCloseBtn" data-t="close">닫기</button></div></div>
+  <script src="car-model-image.js"></script>
   <script type="module">
   import {FLIGHT_TUNING,airborneForwardVelocity,bounceVerticalVelocity,launchVerticalVelocity} from './game-physics.js';
   (()=>{
@@ -211,15 +212,18 @@
       if(!rows.length){state.hidden=false;state.classList.remove('ranking-error');state.textContent=tx('rankingEmpty');return}
       state.hidden=true;
       rows.forEach(row=>{
-        let item=document.createElement('li'),position=document.createElement('span'),name=document.createElement('span'),score=document.createElement('span');
+        let item=document.createElement('li'),position=document.createElement('span'),name=document.createElement('span'),carImage=document.createElement('span'),carName=document.createElement('span'),score=document.createElement('span');
         item.className='ranking-row'+(row.isMe?' is-me':'')+(row.empty?' is-empty':'');
         if(rankingView==='hall'){let monthLabel=document.createElement('span');monthLabel.className='hall-month';monthLabel.textContent=Number(row.period.slice(5,7))+'월';item.append(monthLabel)}
         if(!row.empty&&((rankingView==='monthly'&&row.rank<=3)||rankingView==='hall'))renderCrown(position,rankingView==='hall'||row.rank===1?'gold':row.rank===2?'silver':'bronze',row.rank);
         else{position.className='ranking-position';position.textContent=rankingView==='hall'?'—':row.rank}
         name.className='ranking-name';name.textContent=row.empty?tx('emptyWinner'):row.name;
         if(row.isMe){let you=document.createElement('small');you.className='ranking-you';you.textContent=tx('you');name.append(you)}
+        carImage.className='ranking-car-image';
+        carName.className='ranking-car-name';carName.textContent=row.empty?'—':row.car||'Mystery Car';
+        if(!row.empty){let imageUrl=window.carModelImageUrl(row.car);if(imageUrl){let image=document.createElement('img');image.src=imageUrl;image.alt='';image.loading='lazy';image.onerror=()=>image.remove();carImage.append(image)}}
         score.className='ranking-score';score.textContent=row.empty?'—':fmt(Number(row.score)||0);
-        item.append(position,name,score);list.append(item);
+        item.append(position,name,carImage,carName,score);list.append(item);
       });
     }
     async function rankingRequest(options){

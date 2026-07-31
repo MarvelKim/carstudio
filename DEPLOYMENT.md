@@ -81,3 +81,10 @@ Telegram report includes **네이버 블로그에 공유**, and
 in as `ps8852`, choose the desired category, review the post, and publish it in
 Naver. Category selection and the final publish action cannot be preselected by
 the supported share interface.
+
+The monthly ranking page also renders the finalized TOP 10 as a 1080 x 1350 PNG.
+On mobile browsers that support Web Share file attachments, **랭킹 이미지 바로
+공유** passes that PNG to the native share sheet so it can be sent to the Naver
+Blog app. On desktop and other unsupported browsers, the same action downloads
+the PNG and opens the Naver sharing page; attach the downloaded image before the
+final publish step.
