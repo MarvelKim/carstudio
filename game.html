@@ -60,6 +60,23 @@
     html.mobile-landscape .item-slot:nth-child(4)::after{content:''}
     @media(max-width:650px){.item-slot:nth-child(4)::after{content:''}.ranking-card{padding:17px}.ranking-list{max-height:46vh}.ranking-row{grid-template-columns:31px minmax(54px,.7fr) 50px minmax(70px,1fr) auto;padding:5px 7px;font-size:12px}.hall-list .ranking-row{grid-template-columns:38px 28px minmax(54px,.7fr) 50px minmax(70px,1fr) auto}.ranking-car-image{width:50px;height:30px}.ranking-car-name{font-size:10px}}
   </style>
+  <style>
+    /* Keep the ranking control beside the score HUD and align both HUD rows. */
+    #rankBtn{position:fixed;top:14px;right:308px}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:286px}
+    .stat{min-width:0}
+    .item-queue{width:286px;min-width:0;padding-inline:8px}
+    @media(max-width:650px){
+      #rankBtn{top:7px;right:234px}
+      .stats{gap:5px;width:222px}
+      .stat{min-width:0}
+      .item-queue{width:222px;min-width:0;padding-inline:5px}
+    }
+    html.mobile-landscape #rankBtn{top:max(5px,env(safe-area-inset-top));right:calc(max(6px,env(safe-area-inset-right)) + 188px)}
+    html.mobile-landscape .stats{gap:4px;width:184px}
+    html.mobile-landscape .stat{min-width:0}
+    html.mobile-landscape .item-queue{width:184px;min-width:0;padding-inline:4px}
+  </style>
 </head>
 <body>
   <div class="top">
