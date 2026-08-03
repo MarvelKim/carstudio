@@ -62,7 +62,7 @@
   </style>
   <style>
     /* Keep the ranking control beside the score HUD and align both HUD rows. */
-    #rankBtn{position:fixed;top:14px;right:292px}
+    #rankBtn{position:fixed;top:14px;right:292px;min-width:88px;height:54px}
     .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:270px}
     .stat{min-width:0}
     #rankBtn,#retryBtn,.stat small,.stat strong{white-space:nowrap}
@@ -70,12 +70,12 @@
     .ranking-car-image::before{content:''}
     .ranking-row.is-empty .ranking-car-image::before{content:'🚗'}
     @media(max-width:650px){
-      #rankBtn{top:7px;right:179px}
+      #rankBtn{top:7px;right:179px;min-width:78px;height:44px}
       .stats{gap:5px;width:167px}
       .stat{min-width:0}
       .item-queue{width:167px;min-width:0;padding-inline:5px}
     }
-    html.mobile-landscape #rankBtn{top:max(5px,env(safe-area-inset-top));right:calc(max(6px,env(safe-area-inset-right)) + 144px)}
+    html.mobile-landscape #rankBtn{top:max(5px,env(safe-area-inset-top));right:calc(max(6px,env(safe-area-inset-right)) + 144px);min-width:72px;height:33px}
     html.mobile-landscape .stats{gap:4px;width:140px}
     html.mobile-landscape .stat{min-width:0}
     html.mobile-landscape .item-queue{width:140px;min-width:0;padding-inline:4px}
