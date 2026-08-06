@@ -85,7 +85,7 @@
     html.mobile-landscape .toolbar>.btn:not(#rankBtn),html.mobile-landscape .toolbar>.select{height:31px}
     html.mobile-landscape .stats{gap:4px;width:140px}
     html.mobile-landscape .stat{min-width:0;height:31px;padding-block:0}
-    html.mobile-landscape .item-queue{top:40px;right:max(6px,env(safe-area-inset-right));width:140px;min-width:0;padding-inline:4px}
+    html.mobile-landscape .item-queue{top:40px;right:var(--top-edge-gutter);width:140px;min-width:0;padding-inline:4px}
   </style>
 </head>
 <body>
@@ -152,7 +152,7 @@
     function updateItemQueue(force=false){let next=obstacles.filter(o=>!o.used&&o.x+o.w/2>=car.x-car.w/2).slice(0,5),signature=next.map(o=>`${o.x}:${o.type}:${o.variant}`).join('|')+`:${lang}`;if(!force&&signature===itemQueueSignature)return;itemQueueSignature=signature;let queue=$('#itemQueue');queue.replaceChildren();if(!next.length){let empty=document.createElement('span');empty.className='item-empty';empty.textContent=tx('noItems');queue.append(empty);return}next.forEach((o,index)=>{let slot=document.createElement('span'),number=document.createElement('small');slot.className=`item-slot ${o.type}`;slot.textContent=itemIcon(o);slot.title=tx(o.type);slot.setAttribute('aria-label',`${index+1}. ${tx(o.type)}`);number.className='item-number';number.textContent=index+1;slot.append(number);queue.append(slot)})}
     function reset(){cancelAnimationFrame(raf);phase='angle';paused=false;resumeAfterRanking=false;shareImageFile=null;angle=.45;angleDir=1;power=0;powerDir=1;holding=false;camera=LAUNCH_X-launchScreenX();time=0;blocked=false;bounces=0;rolling=false;truckX=-360;hitFlash=0;particles=[];car.x=LAUNCH_X;car.y=ground()-car.h/2;car.vx=car.vy=car.vr=car.rot=0;buildObstacles();itemQueueSignature='';updateItemQueue(true);$('#altitude').classList.remove('show');$('#resultOverlay').classList.add('hidden');$('#pauseOverlay').classList.add('hidden');$('#rankingOverlay').classList.add('hidden');$('#launchUi').classList.remove('hidden');$('#meterFill').style.width='0%';$('#distance').textContent=fmt(0);$('#shareBtn').disabled=false;$('#shareBtn').textContent=tx('share');updateLaunchText();last=performance.now();raf=requestAnimationFrame(loop)}
     function updateLaunchText(){if(!$)return;let powerMode=phase==='power';$('#instruction').textContent=tx(powerMode?'powerHelp':'angleHelp');$('#holdBtn').textContent=tx(powerMode?'powerButton':'angleButton')}
-    function startHold(e){e.preventDefault();if(!$('#rankingOverlay').classList.contains('hidden'))return;if(phase==='angle'){phase='power';power=0;powerDir=1;holding=false;updateLaunchText()}else if(phase==='power'&&!holding)holding=true}
+    function startHold(e){e.preventDefault();if(!$('#rankingOverlay').classList.contains('hidden'))return;if(phase==='angle'){phase='power';power=0;powerDir=1;holding=true;updateLaunchText()}else if(phase==='power'&&!holding)holding=true}
     function endHold(e){if(e)e.preventDefault();if(phase==='power'&&holding){holding=false;launch()}}
     function cancelHold(){if(phase==='power')holding=false}
     function launch(){phase='truck';$('#launchUi').classList.add('hidden');truckX=-380;setTimeout(()=>{if(phase!=='truck')return;phase='flight';rolling=false;lastEffectAt=-99;let speed=(520+power*720)*LAUNCH_SPEED_MULTIPLIER;car.vx=speed*Math.cos(angle);car.vy=launchVerticalVelocity(speed,angle);car.vr=6+power*10;burst(car.x-50,ground()-25,'#ffd23f',28);hitFlash=1},620/LAUNCH_SPEED_MULTIPLIER)}
