@@ -79,8 +79,9 @@
       .stat{min-width:0;height:38px;padding-block:1px}
       .item-queue{top:48px;right:7px;width:167px;min-width:0;padding-inline:5px}
     }
-    html.mobile-landscape .top{right:max(6px,env(safe-area-inset-right))}
-    html.mobile-landscape #rankBtn{top:max(5px,env(safe-area-inset-top));right:calc(max(6px,env(safe-area-inset-right)) + 144px)}
+    html.mobile-landscape{--top-edge-gutter:calc((max(6px,env(safe-area-inset-left)) + max(6px,env(safe-area-inset-right)))/2)}
+    html.mobile-landscape .top{left:var(--top-edge-gutter);right:var(--top-edge-gutter)}
+    html.mobile-landscape #rankBtn{top:max(5px,env(safe-area-inset-top));right:calc(var(--top-edge-gutter) + 144px)}
     html.mobile-landscape .toolbar>.btn:not(#rankBtn),html.mobile-landscape .toolbar>.select{height:31px}
     html.mobile-landscape .stats{gap:4px;width:140px}
     html.mobile-landscape .stat{min-width:0;height:31px;padding-block:0}
