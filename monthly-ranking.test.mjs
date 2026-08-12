@@ -19,6 +19,10 @@ test("shares the ranking image as a file with a safe download fallback", () => {
   assert.match(html, /downloadImage\(file\);openNaverShare\(\)/);
 });
 
+test("hides the placeholder car when a registered vehicle image exists", () => {
+  assert.match(html, /\.car-thumb:has\(img\)::before\{content:none\}/);
+});
+
 test("monthly ranking inline script parses", () => {
   const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)];
   assert.equal(scripts.length, 1);
