@@ -5,7 +5,9 @@ import {
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
-  launchVerticalVelocity
+  itemScoreFor,
+  launchVerticalVelocity,
+  scoreGrade
 } from "./game-physics.js";
 
 test("reduces a representative 30 second launch to 9 seconds", () => {
@@ -38,4 +40,18 @@ test("keeps every airborne frame moving to the right", () => {
 test("keeps ground bounces short enough to reach nearby items", () => {
   const velocity = bounceVerticalVelocity(10_000);
   assert.equal(ballisticAirtime(velocity), FLIGHT_TUNING.MAX_BOUNCE_AIRTIME);
+});
+
+test("applies the new multiplier immediately to helpful item scores", () => {
+  assert.equal(itemScoreFor("energy", 2), 200);
+  assert.equal(itemScoreFor("sky", 3), 900);
+  assert.equal(itemScoreFor("battery", 4), 600);
+  assert.equal(itemScoreFor("trap", 99), 0);
+});
+
+test("maps final scores to the documented grade boundaries", () => {
+  assert.equal(scoreGrade(0), "rookie");
+  assert.equal(scoreGrade(4500), "bronze");
+  assert.equal(scoreGrade(16500), "gold");
+  assert.equal(scoreGrade(43000), "legend");
 });

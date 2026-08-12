@@ -49,3 +49,24 @@ export function ballisticAirtime(verticalVelocity, gravity = FLIGHT_TUNING.GRAVI
   if (gravity <= 0 || verticalVelocity >= 0) return 0;
   return -2 * verticalVelocity / gravity;
 }
+
+export const SCORE_RULES = Object.freeze({
+  FEVER_CHARGE_SECONDS: 15,
+  HELPFUL_ITEM_FEVER_BONUS: 0.01,
+  FEVER_DURATION_SECONDS: 3.5,
+  ITEM_BASE_SCORE: Object.freeze({ energy: 100, battery: 150, sky: 300, star: 100 })
+});
+
+export function itemScoreFor(type, multiplier) {
+  return (SCORE_RULES.ITEM_BASE_SCORE[type] || 0) * Math.max(1, multiplier);
+}
+
+export function scoreGrade(score) {
+  if (score >= 43000) return 'legend';
+  if (score >= 34500) return 'diamond';
+  if (score >= 25500) return 'platinum';
+  if (score >= 16500) return 'gold';
+  if (score >= 10500) return 'silver';
+  if (score >= 4500) return 'bronze';
+  return 'rookie';
+}
