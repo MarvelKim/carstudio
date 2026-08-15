@@ -17,3 +17,12 @@ test("game alerts use item-specific impact banners", () => {
   assert.match(gameHtml, /el\.className=`toast \$\{kind\}`/);
   assert.match(gameHtml, /prefers-reduced-motion:reduce/);
 });
+
+test("game result offers a five-second rewarded revive placeholder", () => {
+  assert.match(gameHtml, /id="reviveBtn"[^>]*data-t="revive"/);
+  assert.match(gameHtml, /id="adOverlay"[^>]*role="dialog"/);
+  assert.match(gameHtml, /data-t="adInquiry">광고문의 ✈️/);
+  assert.match(gameHtml, /const AD_WAIT_SECONDS=5/);
+  assert.match(gameHtml, /setTimeout\(enableAdClose,AD_WAIT_SECONDS\*1000\)/);
+  assert.match(gameHtml, /function completeRevive\(\).*reset\(\)/);
+});
