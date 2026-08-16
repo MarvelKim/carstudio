@@ -859,6 +859,8 @@
     let aiLoadingTimer = null;
     const testSiteUrl = "https://test-vehicle-dye.pages.dev/";
     const testPasswordHash = "eb0ab9d0aed4b8b8bc26c48d2bddca7fc46ddbecffc988e5f66c2c8df8f95fae";
+    const testPasskeyStorageKey = "carstudioTestPasskeyId";
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     async function hashTestPassword(value) {
       const bytes = new TextEncoder().encode(value);
@@ -868,6 +870,41 @@
 
     function openTestAccess() {testAccessPassword.value="";testAccessError.textContent="";testAccessModal.hidden=false;requestAnimationFrame(()=>testAccessPassword.focus())}
     function closeTestAccess() {testAccessModal.hidden=true;testAccessPassword.value="";testAccessError.textContent="";testSiteButton.focus()}
+
+    function encodePasskeyId(bytes) {return btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"")}
+    function decodePasskeyId(value) {const base64=value.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(value.length/4)*4,"=");return Uint8Array.from(atob(base64),character=>character.charCodeAt(0))}
+    function canUseTestPasskey() {return isMobileDevice&&window.isSecureContext&&window.PublicKeyCredential&&navigator.credentials}
+
+    async function registerTestPasskey() {
+      if(!canUseTestPasskey()||localStorage.getItem(testPasskeyStorageKey))return;
+      const credential=await navigator.credentials.create({publicKey:{
+        challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"Car Studio Test"},
+        user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"test-driver",displayName:"Test Driver"},
+        pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],timeout:60000,
+        authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"preferred",userVerification:"required"},attestation:"none"
+      }});
+      if(credential)localStorage.setItem(testPasskeyStorageKey,encodePasskeyId(credential.rawId));
+    }
+
+    async function authenticateTestPasskey() {
+      const savedId=localStorage.getItem(testPasskeyStorageKey);
+      if(!canUseTestPasskey()||!savedId)return false;
+      try {
+        return Boolean(await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:"public-key",id:decodePasskeyId(savedId),transports:["internal"]}],userVerification:"required",timeout:60000}}));
+      } catch(error) {if(error&&error.name==="InvalidStateError")localStorage.removeItem(testPasskeyStorageKey);return false}
+    }
+
+    function submitTestAccess(password) {
+      const accessRequest=document.createElement("form");accessRequest.method="post";accessRequest.action=testSiteUrl+"__test-access";
+      const passwordField=document.createElement("input");passwordField.type="hidden";passwordField.name="password";passwordField.value=password;accessRequest.append(passwordField);
+      document.body.append(accessRequest);accessRequest.submit();
+    }
+
+    async function openTestSite() {
+      testSiteButton.disabled=true;
+      if(await authenticateTestPasskey()){location.href=testSiteUrl;return}
+      testSiteButton.disabled=false;openTestAccess();
+    }
 
     function applyTheme(theme) {
       const nextTheme = theme === "dark" ? "dark" : "light";
@@ -1239,14 +1276,18 @@
       }
     });
 
-    testSiteButton.addEventListener("click", openTestAccess);
+    testSiteButton.addEventListener("click", openTestSite);
     testAccessCancel.addEventListener("click", closeTestAccess);
     testAccessModal.addEventListener("click", event => {if(event.target===testAccessModal)closeTestAccess()});
     testAccessForm.addEventListener("submit", async event => {
       event.preventDefault();testAccessError.textContent="";
       if(await hashTestPassword(testAccessPassword.value)!==testPasswordHash){testAccessError.textContent="비밀번호가 올바르지 않습니다.";testAccessPassword.select();return}
-      const accessRequest=document.createElement("form");accessRequest.method="post";accessRequest.action=testSiteUrl+"__test-access";
-      const passwordField=document.createElement("input");passwordField.type="hidden";passwordField.name="password";passwordField.value=testAccessPassword.value;accessRequest.append(passwordField);document.body.append(accessRequest);accessRequest.submit();
+      const password=testAccessPassword.value;
+      if(canUseTestPasskey()&&!localStorage.getItem(testPasskeyStorageKey)){
+        testAccessError.textContent="다음 로그인에 사용할 생체인증을 등록해 주세요.";
+        try{await registerTestPasskey()}catch(error){/* 등록 취소 시에도 기존 비밀번호 로그인을 계속한다. */}
+      }
+      submitTestAccess(password);
     });
 
     form.addEventListener("submit", (event) => {

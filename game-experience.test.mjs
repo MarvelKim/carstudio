@@ -11,6 +11,13 @@ test("test site opens the mini-game immediately with a fixed test car", () => {
   assert.match(indexHtml, /location\.replace\("\/game\.html"\)/);
 });
 
+test("mobile test access registers and reuses a platform passkey", () => {
+  assert.match(indexHtml, /authenticatorAttachment:\s*"platform"/);
+  assert.match(indexHtml, /userVerification:\s*"required"/);
+  assert.match(indexHtml, /registerTestPasskey/);
+  assert.match(indexHtml, /authenticateTestPasskey/);
+});
+
 test("game alerts use item-specific impact banners", () => {
   assert.match(gameHtml, /@keyframes toast-impact/);
   assert.match(gameHtml, /icons=\{energy:'⚡',sky:'🚀',trap:'💥',honey:'🍯',ground:'↟'\}/);
@@ -24,5 +31,6 @@ test("game result offers a five-second rewarded revive placeholder", () => {
   assert.match(gameHtml, /data-t="adInquiry">광고문의 ✈️/);
   assert.match(gameHtml, /const AD_WAIT_SECONDS=5/);
   assert.match(gameHtml, /setTimeout\(enableAdClose,AD_WAIT_SECONDS\*1000\)/);
-  assert.match(gameHtml, /function completeRevive\(\).*reset\(\)/);
+  assert.match(gameHtml, /function completeRevive\(\).*phase='flight'.*car\.vx=Math\.max\(car\.vx,9000\)/);
+  assert.match(gameHtml, /reviveUsed=true/);
 });
