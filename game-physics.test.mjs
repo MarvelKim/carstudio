@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   FLIGHT_TUNING,
   airborneForwardVelocity,
@@ -54,4 +55,12 @@ test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(4500), "bronze");
   assert.equal(scoreGrade(16500), "gold");
   assert.equal(scoreGrade(43000), "legend");
+});
+
+test("score HUD styles the full plate for advanced grades", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /\.score-card\[data-grade="silver"\]/);
+  assert.match(gameHtml, /\.score-card\[data-grade="gold"\]::after/);
+  assert.match(gameHtml, /\.score-card\[data-grade="platinum"\]::before/);
+  assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
 });
