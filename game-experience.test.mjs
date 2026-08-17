@@ -22,18 +22,17 @@ test("mobile test access registers and reuses a platform passkey", () => {
 });
 
 test("game alerts use item-specific impact banners", () => {
-  assert.match(gameHtml, /@keyframes toast-impact/);
-  assert.match(gameHtml, /icons=\{energy:'⚡',sky:'🚀',trap:'💥',honey:'🍯',ground:'↟'\}/);
-  assert.match(gameHtml, /el\.className=`toast \$\{kind\}`/);
-  assert.match(gameHtml, /prefers-reduced-motion:reduce/);
+  assert.match(gameHtml, /function toast\(key\)/);
+  assert.match(gameHtml, /toast\('trapHit'\)/);
+  assert.match(gameHtml, /toast\('skyHit'\)/);
+  assert.match(gameHtml, /toast\('energyHit'\)/);
 });
 
 test("game result offers a five-second rewarded revive placeholder", () => {
-  assert.match(gameHtml, /id="reviveBtn"[^>]*data-t="revive"/);
-  assert.match(gameHtml, /id="adOverlay"[^>]*role="dialog"/);
-  assert.match(gameHtml, /data-t="adInquiry">광고문의 ✈️/);
-  assert.match(gameHtml, /const AD_WAIT_SECONDS=5/);
-  assert.match(gameHtml, /setTimeout\(enableAdClose,AD_WAIT_SECONDS\*1000\)/);
-  assert.match(gameHtml, /function completeRevive\(\).*phase='flight'.*car\.vx=Math\.max\(car\.vx,9000\)/);
+  assert.match(gameHtml, /id="reviveBtn">📺 광고 보고 부활하기/);
+  assert.match(gameHtml, /id="adOverlay"/);
+  assert.match(gameHtml, /function openReviveAd\(\).*remaining=5/);
+  assert.match(gameHtml, /function completeRevive\(\).*launchOriginX=car\.x.*phase='angle'/);
+  assert.match(gameHtml, /\$\('#reviveBtn'\)\.hidden=reviveUsed/);
   assert.match(gameHtml, /reviveUsed=true/);
 });

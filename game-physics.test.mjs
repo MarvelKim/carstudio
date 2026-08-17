@@ -1,11 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   FLIGHT_TUNING,
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
-  launchVerticalVelocity
+  itemScoreFor,
+  launchVerticalVelocity,
+  scoreGrade
 } from "./game-physics.js";
 
 test("reduces a representative 30 second launch to 9 seconds", () => {
@@ -38,4 +41,52 @@ test("keeps every airborne frame moving to the right", () => {
 test("keeps ground bounces short enough to reach nearby items", () => {
   const velocity = bounceVerticalVelocity(10_000);
   assert.equal(ballisticAirtime(velocity), FLIGHT_TUNING.MAX_BOUNCE_AIRTIME);
+});
+
+test("applies the new multiplier immediately to helpful item scores", () => {
+  assert.equal(itemScoreFor("energy", 2), 200);
+  assert.equal(itemScoreFor("sky", 3), 900);
+  assert.equal(itemScoreFor("battery", 4), 600);
+  assert.equal(itemScoreFor("trap", 99), 0);
+});
+
+test("maps final scores to the documented grade boundaries", () => {
+  assert.equal(scoreGrade(0), "rookie");
+  assert.equal(scoreGrade(4500), "bronze");
+  assert.equal(scoreGrade(16500), "gold");
+  assert.equal(scoreGrade(43000), "legend");
+});
+
+test("score HUD styles the full plate for advanced grades", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /\.score-card\[data-grade="rookie"\]/);
+  assert.match(gameHtml, /\.score-card\[data-grade="bronze"\]/);
+  assert.match(gameHtml, /\.score-card\[data-grade="silver"\]/);
+  assert.match(gameHtml, /\.score-card\[data-grade="gold"\]::after/);
+  assert.match(gameHtml, /\.score-card\[data-grade="platinum"\]::before/);
+  assert.match(gameHtml, /\.score-card\[data-grade="diamond"\]/);
+  assert.match(gameHtml, /\.score-card\[data-grade="legend"\]/);
+  assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
+});
+
+test("test-game HUD and fever behavior preserve layout and momentum", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
+  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:16px/);
+  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:12px/);
+  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:10px/);
+  assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
+  assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
+  assert.match(gameHtml, /feverEntrySpeed=Math\.max\(car\.vx,MIN_BOUNCE_SPEED\*4\)/);
+  assert.match(gameHtml, /car\.vx=feverEntrySpeed;bounces=0;return true/);
+  assert.match(gameHtml, /if\(!feverActive\)bounces\+\+/);
+});
+
+test("revive reuses the angle and power launch flow without resetting progress", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /launchOriginX=car\.x/);
+  assert.match(gameHtml, /phase='angle'.*\$\('#launchUi'\)\.classList\.remove\('hidden'\)/);
+  assert.doesNotMatch(gameHtml, /function completeRevive\(\).*car\.vx=Math\.max\(car\.vx,9000\)/);
+  assert.match(gameHtml, /id="resultRankBtn".*id="reviveBtn">📺 광고 보고 부활하기/);
+  assert.match(gameHtml, /function finish\(crushed\).*\$\('#reviveBtn'\)\.hidden=reviveUsed/);
 });
