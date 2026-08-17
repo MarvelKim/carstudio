@@ -72,9 +72,9 @@ test("score HUD styles the full plate for advanced grades", async () => {
 test("test-game HUD and fever behavior preserve layout and momentum", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
   assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
-  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:7px/);
-  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:4px/);
-  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:4px/);
+  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:16px/);
+  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:12px/);
+  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:10px/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
   assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
   assert.match(gameHtml, /car\.vx=feverEntrySpeed;return true/);
@@ -86,4 +86,5 @@ test("revive reuses the angle and power launch flow without resetting progress",
   assert.match(gameHtml, /phase='angle'.*\$\('#launchUi'\)\.classList\.remove\('hidden'\)/);
   assert.doesNotMatch(gameHtml, /function completeRevive\(\).*car\.vx=Math\.max\(car\.vx,9000\)/);
   assert.match(gameHtml, /id="resultRankBtn".*id="reviveBtn">📺 광고 보고 부활하기/);
+  assert.match(gameHtml, /function finish\(crushed\).*\$\('#reviveBtn'\)\.hidden=reviveUsed/);
 });
