@@ -9,6 +9,9 @@ test("test site opens the mini-game immediately with a fixed test car", () => {
   assert.match(indexHtml, /location\.hostname === "test-vehicle-dye\.pages\.dev"/);
   assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar", JSON\.stringify\(testCar\)\)/);
   assert.match(indexHtml, /location\.replace\("\/game\.html"\)/);
+  assert.match(indexHtml, /const testGameUrl = testSiteOrigin \+ "\/game\.html"/);
+  assert.match(indexHtml, /authenticateTestPasskey\(\)\)\{location\.href=testGameUrl/);
+  assert.match(indexHtml, /__test-access\?next=%2Fgame\.html/);
 });
 
 test("mobile test access registers and reuses a platform passkey", () => {
