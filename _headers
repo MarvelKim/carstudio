@@ -1,0 +1,5 @@
+/game
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/game.html
+  Cache-Control: no-store, no-cache, must-revalidate
