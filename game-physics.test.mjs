@@ -64,3 +64,18 @@ test("score HUD styles the full plate for advanced grades", async () => {
   assert.match(gameHtml, /\.score-card\[data-grade="platinum"\]::before/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
 });
+
+test("test-game HUD and fever behavior preserve layout and momentum", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /function syncScoreHud\(\)/);
+  assert.match(gameHtml, /score\.style\.top=Math\.ceil\(queue\.getBoundingClientRect\(\)\.bottom\+gap\)/);
+  assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
+  assert.match(gameHtml, /car\.vx=feverEntrySpeed;return true/);
+});
+
+test("revive reuses the angle and power launch flow without resetting progress", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  assert.match(gameHtml, /launchOriginX=car\.x/);
+  assert.match(gameHtml, /phase='angle'.*\$\('#launchUi'\)\.classList\.remove\('hidden'\)/);
+  assert.doesNotMatch(gameHtml, /function completeRevive\(\).*car\.vx=Math\.max\(car\.vx,9000\)/);
+});
