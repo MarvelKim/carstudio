@@ -8,7 +8,7 @@
       const testCar = {name:"Porsche 911 Carrera",image:"https://thecarpicker.com/assets/models/porsche/911-carrera.webp",index:206,playerName:"Test Driver"};
       localStorage.setItem("carstudioGameCar", JSON.stringify(testCar));
       localStorage.setItem("carstudioPlayerName", testCar.playerName);
-      location.replace("/test-game?v=hud-gap-equal");
+      location.replace("/game.html?v=direct-game-v3");
     }
   </script>
   <meta name="description" content="이름과 기본 정보를 바탕으로 수백 종의 자동차 중 나만의 차량을 추천하고, 미래형 AI 자동차 이미지까지 즐길 수 있는 Car Studio입니다.">
@@ -860,7 +860,7 @@
     let showingEnhancedImage = false;
     let aiLoadingTimer = null;
     const testSiteOrigin = "https://test-vehicle-dye.pages.dev";
-    const testGameUrl = testSiteOrigin + "/test-game?v=hud-gap-equal";
+    const testGameUrl = testSiteOrigin + "/game.html?v=direct-game-v3";
     const testPasswordHash = "eb0ab9d0aed4b8b8bc26c48d2bddca7fc46ddbecffc988e5f66c2c8df8f95fae";
     const testPasskeyStorageKey = "carstudioTestPasskeyId";
     const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -898,9 +898,9 @@
     }
 
     function submitTestAccess(password) {
-      const accessRequest=document.createElement("form");accessRequest.method="post";accessRequest.action=testSiteOrigin+"/__test-access?next=%2Ftest-game%3Fv%3Dhud-gap-equal";
+      const accessRequest=document.createElement("form");accessRequest.method="post";accessRequest.action=testSiteOrigin+"/__test-access?next=%2Fgame.html%3Fv%3Ddirect-game-v3";
       const passwordField=document.createElement("input");passwordField.type="hidden";passwordField.name="password";passwordField.value=password;accessRequest.append(passwordField);
-      const nextField=document.createElement("input");nextField.type="hidden";nextField.name="next";nextField.value="/test-game?v=hud-gap-equal";accessRequest.append(nextField);
+      const nextField=document.createElement("input");nextField.type="hidden";nextField.name="next";nextField.value="/game.html?v=direct-game-v3";accessRequest.append(nextField);
       document.body.append(accessRequest);accessRequest.submit();
     }
 
