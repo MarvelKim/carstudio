@@ -8,10 +8,10 @@ const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8")
 test("test site opens the mini-game immediately with a fixed test car", () => {
   assert.match(indexHtml, /location\.hostname === "test-vehicle-dye\.pages\.dev"/);
   assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar", JSON\.stringify\(testCar\)\)/);
-  assert.match(indexHtml, /location\.replace\("\/game\.html"\)/);
-  assert.match(indexHtml, /const testGameUrl = testSiteOrigin \+ "\/game\.html"/);
+  assert.match(indexHtml, /location\.replace\("\/game\.html\?v=d11d6f5"\)/);
+  assert.match(indexHtml, /const testGameUrl = testSiteOrigin \+ "\/game\.html\?v=d11d6f5"/);
   assert.match(indexHtml, /authenticateTestPasskey\(\)\)\{location\.href=testGameUrl/);
-  assert.match(indexHtml, /__test-access\?next=%2Fgame\.html/);
+  assert.match(indexHtml, /__test-access\?next=%2Fgame\.html%3Fv%3Dd11d6f5/);
 });
 
 test("mobile test access registers and reuses a platform passkey", () => {
