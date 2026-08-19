@@ -70,6 +70,8 @@ test("score HUD styles the full plate for advanced grades", async () => {
   assert.match(gameHtml, /--hud-gap:6px/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.ornament=details\.ornament/);
+  assert.match(gameHtml, /grade==='mythic'\?'신화\(MYTHIC\)'/);
+  assert.match(gameHtml, /\$\('#newRecord'\)\.textContent=gradeLabel\(scoreGrade\(finalScore\)\)/);
 });
 
 test("test-game HUD and fever behavior preserve layout and momentum", async () => {
