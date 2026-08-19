@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   FLIGHT_TUNING,
+  SCORE_GRADES,
+  SCORE_RULES,
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
@@ -52,29 +54,28 @@ test("applies the new multiplier immediately to helpful item scores", () => {
 
 test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(0), "rookie");
-  assert.equal(scoreGrade(4500), "bronze");
-  assert.equal(scoreGrade(16500), "gold");
-  assert.equal(scoreGrade(43000), "legend");
+  assert.equal(scoreGrade(4000), "bronze");
+  assert.equal(scoreGrade(34000), "sapphire");
+  assert.equal(scoreGrade(43000), "ruby");
+  assert.equal(scoreGrade(90000), "mythic");
+  assert.equal(scoreGrade(105000), "legend");
+  assert.equal(SCORE_GRADES.length, 13);
+  assert.equal(SCORE_GRADES[0].min, SCORE_RULES.ANTICIPATED_SCORE_CEILING * (1 - SCORE_RULES.TOP_GRADE_FRACTION));
 });
 
 test("score HUD styles the full plate for advanced grades", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
-  assert.match(gameHtml, /\.score-card\[data-grade="rookie"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="bronze"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="silver"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="gold"\]::after/);
-  assert.match(gameHtml, /\.score-card\[data-grade="platinum"\]::before/);
-  assert.match(gameHtml, /\.score-card\[data-grade="diamond"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="legend"\]/);
+  assert.match(gameHtml, /\.score-card\[data-ornament="roots"\]::before/);
+  assert.match(gameHtml, /\.score-card\[data-ornament="stars"\]::after/);
+  assert.match(gameHtml, /--hud-gap:6px/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
+  assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.ornament=details\.ornament/);
 });
 
 test("test-game HUD and fever behavior preserve layout and momentum", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
   assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
-  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:16px/);
-  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:12px/);
-  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:10px/);
+  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:var\(--hud-gap\)/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
   assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
   assert.match(gameHtml, /car\.vx=feverEntrySpeed;return true/);

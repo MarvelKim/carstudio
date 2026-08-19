@@ -54,19 +54,35 @@ export const SCORE_RULES = Object.freeze({
   FEVER_CHARGE_SECONDS: 15,
   HELPFUL_ITEM_FEVER_BONUS: 0.01,
   FEVER_DURATION_SECONDS: 3.5,
-  ITEM_BASE_SCORE: Object.freeze({ energy: 100, battery: 150, sky: 300, star: 100 })
+  ITEM_BASE_SCORE: Object.freeze({ energy: 100, battery: 150, sky: 300, star: 100 }),
+  ANTICIPATED_SCORE_CEILING: 110000,
+  TOP_GRADE_FRACTION: 5 / 110
 });
+
+export const SCORE_GRADES = Object.freeze([
+  { min: 105000, name: 'legend', ornament: 'stars' },
+  { min: 90000, name: 'mythic', ornament: 'stars' },
+  { min: 76000, name: 'diamond', ornament: 'stars' },
+  { min: 64000, name: 'platinum', ornament: 'stars' },
+  { min: 53000, name: 'amethyst', ornament: 'roots' },
+  { min: 43000, name: 'ruby', ornament: 'roots' },
+  { min: 34000, name: 'sapphire', ornament: 'roots' },
+  { min: 26000, name: 'emerald', ornament: 'roots' },
+  { min: 19000, name: 'topaz', ornament: 'plain' },
+  { min: 13000, name: 'gold', ornament: 'plain' },
+  { min: 8000, name: 'silver', ornament: 'plain' },
+  { min: 4000, name: 'bronze', ornament: 'plain' },
+  { min: 0, name: 'rookie', ornament: 'plain' }
+].map(Object.freeze));
 
 export function itemScoreFor(type, multiplier) {
   return (SCORE_RULES.ITEM_BASE_SCORE[type] || 0) * Math.max(1, multiplier);
 }
 
 export function scoreGrade(score) {
-  if (score >= 43000) return 'legend';
-  if (score >= 34500) return 'diamond';
-  if (score >= 25500) return 'platinum';
-  if (score >= 16500) return 'gold';
-  if (score >= 10500) return 'silver';
-  if (score >= 4500) return 'bronze';
-  return 'rookie';
+  return scoreGradeDetails(score).name;
+}
+
+export function scoreGradeDetails(score) {
+  return SCORE_GRADES.find(grade => score >= grade.min);
 }
