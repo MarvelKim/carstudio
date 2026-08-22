@@ -61,17 +61,19 @@ export const SCORE_RULES = Object.freeze({
 
 export const SCORE_GRADES = Object.freeze([
   { min: 105000, name: 'legend', ornament: 'stars' },
-  { min: 90000, name: 'mythic', ornament: 'stars' },
-  { min: 76000, name: 'diamond', ornament: 'stars' },
-  { min: 64000, name: 'platinum', ornament: 'stars' },
-  { min: 53000, name: 'amethyst', ornament: 'roots' },
-  { min: 43000, name: 'ruby', ornament: 'roots' },
-  { min: 34000, name: 'sapphire', ornament: 'roots' },
-  { min: 26000, name: 'emerald', ornament: 'roots' },
-  { min: 19000, name: 'topaz', ornament: 'plain' },
-  { min: 13000, name: 'gold', ornament: 'plain' },
-  { min: 8000, name: 'silver', ornament: 'plain' },
-  { min: 4000, name: 'bronze', ornament: 'plain' },
+  { min: 99000, name: 'diamond-red', ornament: 'plain' },
+  { min: 92000, name: 'diamond-green', ornament: 'plain' },
+  { min: 85000, name: 'diamond-pink', ornament: 'plain' },
+  { min: 76000, name: 'diamond-brown', ornament: 'plain' },
+  { min: 64000, name: 'ruby', ornament: 'plain' },
+  { min: 53000, name: 'alexandrite', ornament: 'plain' },
+  { min: 43000, name: 'tourmaline', ornament: 'plain' },
+  { min: 34000, name: 'emerald', ornament: 'plain' },
+  { min: 26000, name: 'platinum', ornament: 'plain' },
+  { min: 19000, name: 'gold', ornament: 'plain' },
+  { min: 13000, name: 'silver', ornament: 'plain' },
+  { min: 8000, name: 'bronze', ornament: 'plain' },
+  { min: 4000, name: 'iron', ornament: 'plain' },
   { min: 0, name: 'rookie', ornament: 'plain' }
 ].map(Object.freeze));
 

@@ -54,23 +54,28 @@ test("applies the new multiplier immediately to helpful item scores", () => {
 
 test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(0), "rookie");
-  assert.equal(scoreGrade(4000), "bronze");
-  assert.equal(scoreGrade(34000), "sapphire");
-  assert.equal(scoreGrade(43000), "ruby");
-  assert.equal(scoreGrade(90000), "mythic");
+  assert.equal(scoreGrade(4000), "iron");
+  assert.equal(scoreGrade(8000), "bronze");
+  assert.equal(scoreGrade(34000), "emerald");
+  assert.equal(scoreGrade(43000), "tourmaline");
+  assert.equal(scoreGrade(53000), "alexandrite");
+  assert.equal(scoreGrade(64000), "ruby");
+  assert.equal(scoreGrade(76000), "diamond-brown");
+  assert.equal(scoreGrade(85000), "diamond-pink");
+  assert.equal(scoreGrade(92000), "diamond-green");
+  assert.equal(scoreGrade(99000), "diamond-red");
   assert.equal(scoreGrade(105000), "legend");
-  assert.equal(SCORE_GRADES.length, 13);
+  assert.equal(SCORE_GRADES.length, 15);
   assert.equal(SCORE_GRADES[0].min, SCORE_RULES.ANTICIPATED_SCORE_CEILING * (1 - SCORE_RULES.TOP_GRADE_FRACTION));
 });
 
-test("score HUD styles the full plate for advanced grades", async () => {
+test("score HUD uses readable low-saturation plates without ornaments", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
-  assert.match(gameHtml, /\.score-card\[data-ornament="roots"\]::before/);
-  assert.match(gameHtml, /\.score-card\[data-ornament="stars"\]::after/);
+  assert.doesNotMatch(gameHtml, /\.score-card\[data-ornament=/);
+  assert.match(gameHtml, /\.score-card\[data-grade="bronze"\]/);
+  assert.match(gameHtml, /repeating-linear-gradient/);
   assert.match(gameHtml, /--hud-gap:6px/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
-  assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.ornament=details\.ornament/);
-  assert.match(gameHtml, /grade==='mythic'\?'신화\(MYTHIC\)'/);
   assert.match(gameHtml, /\$\('#newRecord'\)\.textContent=gradeLabel\(scoreGrade\(finalScore\)\)/);
 });
 
