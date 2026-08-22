@@ -5,20 +5,13 @@ import { readFile } from "node:fs/promises";
 const indexHtml = await readFile(new URL("./index.html", import.meta.url), "utf8");
 const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
 
-test("test site opens the mini-game immediately with a fixed test car", () => {
-  assert.match(indexHtml, /location\.hostname === "test-vehicle-dye\.pages\.dev"/);
-  assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar", JSON\.stringify\(testCar\)\)/);
-  assert.match(indexHtml, /location\.replace\("\/game\.html\?v=revive-hud-v4"\)/);
-  assert.match(indexHtml, /const testGameUrl = testSiteOrigin \+ "\/game\.html\?v=revive-hud-v4"/);
-  assert.match(indexHtml, /authenticateTestPasskey\(\)\)\{location\.href=testGameUrl/);
-  assert.match(indexHtml, /__test-access\?next=%2Fgame\.html%3Fv%3Drevive-hud-v4/);
-});
-
-test("mobile test access registers and reuses a platform passkey", () => {
-  assert.match(indexHtml, /authenticatorAttachment:\s*"platform"/);
-  assert.match(indexHtml, /userVerification:\s*"required"/);
-  assert.match(indexHtml, /registerTestPasskey/);
-  assert.match(indexHtml, /authenticateTestPasskey/);
+test("main page starts the current mini-game directly with Porsche 911", () => {
+  assert.match(indexHtml, /PORSCHE 911로 미니게임 바로 시작/);
+  assert.match(indexHtml, /function startPorscheMiniGame\(\)/);
+  assert.match(indexHtml, /name:"Porsche 911 Carrera"/);
+  assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar",JSON\.stringify\(porsche\)\)/);
+  assert.match(indexHtml, /location\.href="\/game\.html\?v=score-grade-v15"/);
+  assert.doesNotMatch(indexHtml, /test-vehicle-dye\.pages\.dev|testAccessPassword|authenticateTestPasskey/);
 });
 
 test("game alerts use item-specific impact banners", () => {

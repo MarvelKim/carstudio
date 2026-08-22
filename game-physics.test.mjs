@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   FLIGHT_TUNING,
+  SCORE_GRADES,
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
@@ -52,20 +53,26 @@ test("applies the new multiplier immediately to helpful item scores", () => {
 
 test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(0), "rookie");
-  assert.equal(scoreGrade(4500), "bronze");
-  assert.equal(scoreGrade(16500), "gold");
+  assert.equal(SCORE_GRADES.length, 15);
+  assert.equal(scoreGrade(3000), "iron");
+  assert.equal(scoreGrade(6000), "bronze");
+  assert.equal(scoreGrade(15000), "platinum");
+  assert.equal(scoreGrade(18000), "emerald");
+  assert.equal(scoreGrade(21000), "tourmaline");
+  assert.equal(scoreGrade(24000), "alexandrite");
+  assert.equal(scoreGrade(27000), "ruby");
+  assert.equal(scoreGrade(30000), "diamond-brown");
+  assert.equal(scoreGrade(33000), "diamond-pink");
+  assert.equal(scoreGrade(36000), "diamond-green");
+  assert.equal(scoreGrade(39000), "diamond-red");
   assert.equal(scoreGrade(43000), "legend");
 });
 
-test("score HUD styles the full plate for advanced grades", async () => {
+test("score HUD uses readable low-saturation plates without ornaments", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
-  assert.match(gameHtml, /\.score-card\[data-grade="rookie"\]/);
   assert.match(gameHtml, /\.score-card\[data-grade="bronze"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="silver"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="gold"\]::after/);
-  assert.match(gameHtml, /\.score-card\[data-grade="platinum"\]::before/);
-  assert.match(gameHtml, /\.score-card\[data-grade="diamond"\]/);
-  assert.match(gameHtml, /\.score-card\[data-grade="legend"\]/);
+  assert.match(gameHtml, /repeating-linear-gradient/);
+  assert.match(gameHtml, /\.grade-frame\{display:none!important\}/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
 });
 

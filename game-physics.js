@@ -61,12 +61,24 @@ export function itemScoreFor(type, multiplier) {
   return (SCORE_RULES.ITEM_BASE_SCORE[type] || 0) * Math.max(1, multiplier);
 }
 
+export const SCORE_GRADES = Object.freeze([
+  { minimum: 43000, key: 'legend' },
+  { minimum: 39000, key: 'diamond-red' },
+  { minimum: 36000, key: 'diamond-green' },
+  { minimum: 33000, key: 'diamond-pink' },
+  { minimum: 30000, key: 'diamond-brown' },
+  { minimum: 27000, key: 'ruby' },
+  { minimum: 24000, key: 'alexandrite' },
+  { minimum: 21000, key: 'tourmaline' },
+  { minimum: 18000, key: 'emerald' },
+  { minimum: 15000, key: 'platinum' },
+  { minimum: 12000, key: 'gold' },
+  { minimum: 9000, key: 'silver' },
+  { minimum: 6000, key: 'bronze' },
+  { minimum: 3000, key: 'iron' },
+  { minimum: 0, key: 'rookie' }
+].map(Object.freeze));
+
 export function scoreGrade(score) {
-  if (score >= 43000) return 'legend';
-  if (score >= 34500) return 'diamond';
-  if (score >= 25500) return 'platinum';
-  if (score >= 16500) return 'gold';
-  if (score >= 10500) return 'silver';
-  if (score >= 4500) return 'bronze';
-  return 'rookie';
+  return SCORE_GRADES.find(grade => score >= grade.minimum).key;
 }
