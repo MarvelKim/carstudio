@@ -5,13 +5,16 @@ import { readFile } from "node:fs/promises";
 const indexHtml = await readFile(new URL("./index.html", import.meta.url), "utf8");
 const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
 
-test("main page starts the current mini-game directly with Porsche 911", () => {
-  assert.match(indexHtml, /PORSCHE 911로 미니게임 바로 시작/);
+test("main page protects the direct Porsche game with password then passkey", () => {
+  assert.match(indexHtml, /TEST · PORSCHE 911 미니게임/);
   assert.match(indexHtml, /function startPorscheMiniGame\(\)/);
   assert.match(indexHtml, /name:"Porsche 911 Carrera"/);
   assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar",JSON\.stringify\(porsche\)\)/);
-  assert.match(indexHtml, /location\.href="\/game\.html\?v=score-grade-v15"/);
-  assert.doesNotMatch(indexHtml, /test-vehicle-dye\.pages\.dev|testAccessPassword|authenticateTestPasskey/);
+  assert.match(indexHtml, /location\.href="\/game\.html"/);
+  assert.match(indexHtml, /testPasswordHash="34a1f239090ea33fc9f6458e3d49c41b1dba5bdfafe7fcc0aa33a384cec9c79d"/);
+  assert.match(indexHtml, /authenticatorAttachment:"platform"/);
+  assert.match(indexHtml, /authenticateTestPasskey/);
+  assert.doesNotMatch(indexHtml, /test-vehicle-dye\.pages\.dev/);
 });
 
 test("game alerts use item-specific impact banners", () => {
