@@ -42,6 +42,12 @@ test("keeps every airborne frame moving to the right", () => {
   }
 });
 
+test("reduces obstacle slowdown amounts by forty percent", async () => {
+  const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+
+  assert.match(gameHtml, /type==='trap'.*applySpeedMultiplier\(car\.vx,\.496\)/);
+  assert.match(gameHtml, /type==='honey'.*applySpeedMultiplier\(car\.vx,\.73\)/);
+});
 test("keeps ground bounces short enough to reach nearby items", () => {
   const velocity = bounceVerticalVelocity(10_000);
   assert.equal(ballisticAirtime(velocity), FLIGHT_TUNING.MAX_BOUNCE_AIRTIME);
