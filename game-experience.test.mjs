@@ -6,7 +6,7 @@ const indexHtml = await readFile(new URL("./index.html", import.meta.url), "utf8
 const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
 
 test("main page protects the direct Porsche game with password then passkey", () => {
-  assert.match(indexHtml, /TEST · PORSCHE 911 미니게임/);
+  assert.match(indexHtml, /id="testSiteButton"[^>]*>TEST<\/button>/);
   assert.match(indexHtml, /function startPorscheMiniGame\(\)/);
   assert.match(indexHtml, /name:"Porsche 911 Carrera"/);
   assert.match(indexHtml, /localStorage\.setItem\("carstudioGameCar",JSON\.stringify\(porsche\)\)/);

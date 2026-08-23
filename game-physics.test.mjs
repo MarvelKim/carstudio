@@ -77,7 +77,9 @@ test("score HUD uses readable low-saturation plates without ornaments", async ()
   assert.match(gameHtml, /repeating-linear-gradient/);
   assert.match(gameHtml, /\.grade-frame\{display:none!important\}/);
   assert.match(gameHtml, /height:66px!important;min-height:66px!important;max-height:66px!important/);
-  assert.match(gameHtml, /const gradeLabel=grade=>grade\.replaceAll\('-',' '\)\.toUpperCase\(\)/);
+  assert.match(gameHtml, /diamond-brown.*DIAMOND.*diamond-red.*DIAMOND PINK/);
+  assert.match(gameHtml, /score-card\.fever\[data-grade\^="diamond-/);
+  assert.match(gameHtml, /score-card\.fever\[data-grade="legend"\]/);
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
 });
 
