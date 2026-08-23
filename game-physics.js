@@ -38,11 +38,14 @@ export function bounceVerticalVelocity(impactSpeed) {
 }
 
 export function airborneForwardVelocity(speed, dt) {
-  const decayed = Math.max(0, speed) * Math.pow(
+  return Math.max(0, speed) * Math.pow(
     FLIGHT_TUNING.AIR_DRAG_PER_FRAME,
     Math.max(0, dt) * 60
   );
-  return Math.max(FLIGHT_TUNING.MIN_FORWARD_AIR_SPEED, decayed);
+}
+
+export function applySpeedMultiplier(speed, retainedRatio) {
+  return Math.max(0, speed) * retainedRatio;
 }
 
 export function ballisticAirtime(verticalVelocity, gravity = FLIGHT_TUNING.GRAVITY) {

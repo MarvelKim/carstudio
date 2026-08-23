@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import {
   FLIGHT_TUNING,
   SCORE_GRADES,
+  applySpeedMultiplier,
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
@@ -35,7 +36,9 @@ test("keeps every airborne frame moving to the right", () => {
   let speed = 10;
   for (let frame = 0; frame < 60 * 30; frame += 1) {
     speed = airborneForwardVelocity(speed, 1 / 60);
-    assert.ok(speed >= FLIGHT_TUNING.MIN_FORWARD_AIR_SPEED);
+    assert.ok(speed > 0);
+    assert.equal(applySpeedMultiplier(100, .30), 30);
+    assert.equal(applySpeedMultiplier(30, .30), 9);
   }
 });
 
@@ -81,9 +84,9 @@ test("score HUD uses readable low-saturation plates without ornaments", async ()
 test("test-game HUD and fever behavior preserve layout and momentum", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
   assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
-  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:16px/);
-  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:12px/);
-  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:10px/);
+  assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:6px/);
+  assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:3px/);
+  assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:4px/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
   assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
   assert.match(gameHtml, /feverEntrySpeed=Math\.max\(car\.vx,MIN_BOUNCE_SPEED\*4\)/);
