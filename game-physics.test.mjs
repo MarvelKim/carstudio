@@ -77,11 +77,12 @@ test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(43000), "legend");
 });
 
-test("score HUD uses readable low-saturation plates without ornaments", async () => {
+test("score HUD restores colorful Fever Time plates without resizing the card", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
   assert.match(gameHtml, /\.score-card\[data-grade="bronze"\]/);
-  assert.match(gameHtml, /repeating-linear-gradient/);
-  assert.match(gameHtml, /\.grade-frame\{display:none!important\}/);
+  assert.match(gameHtml, /Restore the original colorful Fever Time palette/);
+  assert.match(gameHtml, /\.score-card\[data-grade="legend"\]::after\{[^}]*conic-gradient/);
+  assert.match(gameHtml, /animation:plate-shimmer 7s linear infinite/);
   assert.match(gameHtml, /height:66px!important;min-height:66px!important;max-height:66px!important/);
   assert.match(gameHtml, /diamond-brown.*DIAMOND.*diamond-red.*DIAMOND PINK/);
   assert.match(gameHtml, /score-card\.fever\[data-grade\^="diamond-/);
