@@ -94,5 +94,6 @@ test("revive reuses the angle and power launch flow without resetting progress",
   assert.match(gameHtml, /phase='angle'.*\$\('#launchUi'\)\.classList\.remove\('hidden'\)/);
   assert.doesNotMatch(gameHtml, /function completeRevive\(\).*car\.vx=Math\.max\(car\.vx,9000\)/);
   assert.match(gameHtml, /id="resultRankBtn".*id="reviveBtn">📺 광고 보고 부활하기/);
+  assert.match(gameHtml, /class="ad-contact-link" href="mailto:ps8852@naver\.com"[^>]*>광고문의 .*<\/a>/);
   assert.match(gameHtml, /function finish\(crushed\).*\$\('#reviveBtn'\)\.hidden=reviveUsed/);
 });
