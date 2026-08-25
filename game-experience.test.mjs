@@ -27,6 +27,7 @@ test("game alerts use item-specific impact banners", () => {
 test("game result offers a five-second rewarded revive placeholder", () => {
   assert.match(gameHtml, /id="reviveBtn">📺 광고 보고 부활하기/);
   assert.match(gameHtml, /id="adOverlay"/);
+  assert.match(gameHtml, /class="ad-contact-link" href="mailto:ps8852@naver\.com"[^>]*>광고문의 .*<\/a>/);
   assert.match(gameHtml, /function openReviveAd\(\).*remaining=5/);
   assert.match(gameHtml, /function completeRevive\(\).*launchOriginX=car\.x.*phase='angle'/);
   assert.match(gameHtml, /\$\('#reviveBtn'\)\.hidden=reviveUsed/);
