@@ -63,18 +63,18 @@ test("applies the new multiplier immediately to helpful item scores", () => {
 test("maps final scores to the documented grade boundaries", () => {
   assert.equal(scoreGrade(0), "rookie");
   assert.equal(SCORE_GRADES.length, 15);
-  assert.equal(scoreGrade(3000), "iron");
-  assert.equal(scoreGrade(6000), "bronze");
-  assert.equal(scoreGrade(15000), "platinum");
-  assert.equal(scoreGrade(18000), "emerald");
-  assert.equal(scoreGrade(21000), "tourmaline");
-  assert.equal(scoreGrade(24000), "alexandrite");
-  assert.equal(scoreGrade(27000), "ruby");
-  assert.equal(scoreGrade(30000), "diamond-brown");
-  assert.equal(scoreGrade(33000), "diamond-pink");
-  assert.equal(scoreGrade(36000), "diamond-green");
-  assert.equal(scoreGrade(39000), "diamond-red");
-  assert.equal(scoreGrade(43000), "legend");
+  assert.equal(scoreGrade(8000), "iron");
+  assert.equal(scoreGrade(16000), "bronze");
+  assert.equal(scoreGrade(40000), "platinum");
+  assert.equal(scoreGrade(48000), "emerald");
+  assert.equal(scoreGrade(56000), "tourmaline");
+  assert.equal(scoreGrade(64000), "alexandrite");
+  assert.equal(scoreGrade(72000), "ruby");
+  assert.equal(scoreGrade(80000), "diamond-brown");
+  assert.equal(scoreGrade(88000), "diamond-pink");
+  assert.equal(scoreGrade(96000), "diamond-green");
+  assert.equal(scoreGrade(104000), "diamond-red");
+  assert.equal(scoreGrade(112000), "legend");
 });
 
 test("score HUD restores colorful Fever Time plates without resizing the card", async () => {
@@ -96,6 +96,7 @@ test("test-game HUD and fever behavior preserve layout and momentum", async () =
   assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:6px/);
   assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:3px/);
   assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:4px/);
+  assert.match(gameHtml, /html\.mobile-landscape \.score-card\{height:50px!important;min-height:50px!important;max-height:50px!important;flex-basis:50px!important/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
   assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
   assert.match(gameHtml, /feverEntrySpeed=Math\.max\(car\.vx,MIN_BOUNCE_SPEED\*4\)/);

@@ -65,20 +65,20 @@ export function itemScoreFor(type, multiplier) {
 }
 
 export const SCORE_GRADES = Object.freeze([
-  { minimum: 43000, key: 'legend' },
-  { minimum: 39000, key: 'diamond-red' },
-  { minimum: 36000, key: 'diamond-green' },
-  { minimum: 33000, key: 'diamond-pink' },
-  { minimum: 30000, key: 'diamond-brown' },
-  { minimum: 27000, key: 'ruby' },
-  { minimum: 24000, key: 'alexandrite' },
-  { minimum: 21000, key: 'tourmaline' },
-  { minimum: 18000, key: 'emerald' },
-  { minimum: 15000, key: 'platinum' },
-  { minimum: 12000, key: 'gold' },
-  { minimum: 9000, key: 'silver' },
-  { minimum: 6000, key: 'bronze' },
-  { minimum: 3000, key: 'iron' },
+  { minimum: 112000, key: 'legend' },
+  { minimum: 104000, key: 'diamond-red' },
+  { minimum: 96000, key: 'diamond-green' },
+  { minimum: 88000, key: 'diamond-pink' },
+  { minimum: 80000, key: 'diamond-brown' },
+  { minimum: 72000, key: 'ruby' },
+  { minimum: 64000, key: 'alexandrite' },
+  { minimum: 56000, key: 'tourmaline' },
+  { minimum: 48000, key: 'emerald' },
+  { minimum: 40000, key: 'platinum' },
+  { minimum: 32000, key: 'gold' },
+  { minimum: 24000, key: 'silver' },
+  { minimum: 16000, key: 'bronze' },
+  { minimum: 8000, key: 'iron' },
   { minimum: 0, key: 'rookie' }
 ].map(Object.freeze));
 
