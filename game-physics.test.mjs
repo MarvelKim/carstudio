@@ -2,14 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
+  FEVER_FLIGHT_TUNING,
   FLIGHT_TUNING,
   SCORE_GRADES,
   applySpeedMultiplier,
   airborneForwardVelocity,
   ballisticAirtime,
   bounceVerticalVelocity,
+  feverPathState,
   itemScoreFor,
   launchVerticalVelocity,
+  nextFeverStarY,
   scoreGrade
 } from "./game-physics.js";
 
@@ -53,6 +56,53 @@ test("keeps ground bounces short enough to reach nearby items", () => {
   assert.equal(ballisticAirtime(velocity), FLIGHT_TUNING.MAX_BOUNCE_AIRTIME);
 });
 
+test("builds a bounded fever-star route with small steps between neighbors", () => {
+  const minimumY = 180;
+  const maximumY = 620;
+  const horizontalSpeed = 56_000;
+  const randomValues = [0, 1, .15, .85, .35, .7, .05, .95];
+  const gaps = [260, 700, 310, 540, 420, 680, 280, 510];
+  let previousY = maximumY;
+
+  randomValues.forEach((randomValue, index) => {
+    const nextY = nextFeverStarY(
+      previousY,
+      randomValue,
+      minimumY,
+      maximumY,
+      gaps[index],
+      horizontalSpeed
+    );
+    const allowedStep = Math.min(
+      FEVER_FLIGHT_TUNING.MAX_STAR_STEP_PX,
+      gaps[index] * FEVER_FLIGHT_TUNING.MAX_PATH_SLOPE,
+      gaps[index] * FEVER_FLIGHT_TUNING.MAX_VERTICAL_SPEED_PX_PER_SECOND
+        / (horizontalSpeed * 1.5)
+    );
+    assert.ok(nextY >= minimumY && nextY <= maximumY);
+    assert.ok(Math.abs(nextY - previousY) <= allowedStep + 1e-9);
+    assert.ok(
+      Math.abs(nextY - previousY) * 1.5 * horizontalSpeed / gaps[index]
+        <= FEVER_FLIGHT_TUNING.MAX_VERTICAL_SPEED_PX_PER_SECOND + 1e-9
+    );
+    previousY = nextY;
+  });
+});
+
+test("eases fever flight through each star without overshooting", () => {
+  const startY = 500;
+  const endY = 260;
+  const distance = 600;
+  const start = feverPathState(startY, endY, 0, distance);
+  const middle = feverPathState(startY, endY, .5, distance);
+  const end = feverPathState(startY, endY, 1, distance);
+
+  assert.deepEqual(start, { y: startY, slope: 0 });
+  assert.equal(middle.y, 380);
+  assert.ok(middle.slope < 0);
+  assert.deepEqual(end, { y: endY, slope: 0 });
+});
+
 test("applies the new multiplier immediately to helpful item scores", () => {
   assert.equal(itemScoreFor("energy", 2), 200);
   assert.equal(itemScoreFor("sky", 3), 900);
@@ -90,18 +140,30 @@ test("score HUD restores colorful Fever Time plates without resizing the card", 
   assert.match(gameHtml, /\$\('#scoreCard'\)\.dataset\.grade=grade/);
 });
 
-test("test-game HUD and fever behavior preserve layout and momentum", async () => {
+test("main and test-game fever behavior preserves layout and follows every star", async () => {
   const gameHtml = await readFile(new URL("./game.html", import.meta.url), "utf8");
+  const indexHtml = await readFile(new URL("./index.html", import.meta.url), "utf8");
   assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
   assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:6px/);
   assert.match(gameHtml, /@media\(max-width:650px\)\{\.right-game-hud\{[^}]*gap:3px/);
   assert.match(gameHtml, /html\.mobile-landscape \.right-game-hud\{[^}]*gap:4px/);
   assert.match(gameHtml, /html\.mobile-landscape \.score-card\{height:50px!important;min-height:50px!important;max-height:50px!important;flex-basis:50px!important/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
-  assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
   assert.match(gameHtml, /feverEntrySpeed=Math\.max\(car\.vx,MIN_BOUNCE_SPEED\*4\)/);
-  assert.match(gameHtml, /car\.vx=feverEntrySpeed;bounces=0;return true/);
+  assert.match(gameHtml, /feverEntrySpin=car\.vr<0\?-1:1/);
+  assert.match(gameHtml, /function assignFeverStar\(o\).*nextFeverStarY/);
+  assert.match(gameHtml, /function prepareFeverRoute\(\).*assignFeverStar/);
+  assert.match(gameHtml, /let path=feverPathAt\(car\.x\).*car\.y=path\.y.*car\.rot=Math\.atan\(path\.slope\)/);
+  assert.match(gameHtml, /crossed=feverStar\?o\.x>=minimumX&&o\.x<=maximumX/);
+  assert.match(gameHtml, /touching=feverStar\|\|/);
+  assert.match(gameHtml, /feverActive&&Number\.isFinite\(o\.feverY\)\?worldY\(o\.feverY\)/);
+  assert.match(gameHtml, /if\(feverEnding\)finishFeverOnStar\(\)/);
+  assert.match(gameHtml, /car\.vx=feverEntrySpeed;car\.vy=Math\.max\(-SKY_ITEM_LIFT,Math\.min\(SKY_ITEM_LIFT,car\.vy\)\);car\.vr=feverEntrySpin/);
+  assert.doesNotMatch(gameHtml, /function finishFeverOnStar\(\).*car\.y=ground\(\)/);
+  assert.doesNotMatch(gameHtml, /createLinearGradient\(-car\.w\/2,0,-car\.w\/2-tail,0\)/);
   assert.match(gameHtml, /if\(!feverActive\)bounces\+\+/);
+  assert.match(indexHtml, /id="miniGameButton" href="\/game\.html"/);
+  assert.match(indexHtml, /function startPorscheMiniGame\(\).*location\.href="\/game\.html"/s);
 });
 
 test("revive reuses the angle and power launch flow without resetting progress", async () => {
