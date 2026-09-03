@@ -19,9 +19,10 @@ test("main page protects the direct Porsche game with password then passkey", ()
 
 test("game alerts use item-specific impact banners", () => {
   assert.match(gameHtml, /function toast\(key\)/);
-  assert.match(gameHtml, /toast\('trapHit'\)/);
-  assert.match(gameHtml, /toast\('skyHit'\)/);
-  assert.match(gameHtml, /toast\('energyHit'\)/);
+  assert.doesNotMatch(gameHtml, /toast\('(trapHit|honeyHit|skyHit|energyHit)'\)/);
+  assert.match(gameHtml, /cycle===0\?'morning':cycle===1\?'sunset':'space'/);
+  assert.match(gameHtml, /function drawSpaceDetails\(alpha\)/);
+  assert.match(gameHtml, /document\.querySelectorAll\('\.top \.stats,\.item-queue,\.score-card'\)/);
 });
 
 test("game result offers a five-second rewarded revive placeholder", () => {
