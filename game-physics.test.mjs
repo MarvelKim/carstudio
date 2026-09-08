@@ -84,8 +84,8 @@ test("test-game HUD and fever behavior preserve layout and momentum", async () =
   assert.match(gameHtml, /class="right-game-hud"><aside class="item-queue"/);
   assert.match(gameHtml, /\.right-game-hud\{[^}]*flex-direction:column;gap:var\(--hud-gap\)/);
   assert.match(gameHtml, /\.right-game-hud>\.item-queue,\.right-game-hud>\.score-card\{position:static!important/);
-  assert.match(gameHtml, /if\(rolling\)\{rolling=false;car\.y=ground\(\)-carVerticalRadius/);
-  assert.match(gameHtml, /car\.vx=feverEntrySpeed;return true/);
+  assert.match(gameHtml, /rolling=false;prepareFeverRoute\(\)/);
+  assert.match(gameHtml, /function finishFeverOnStar\(\).*car\.vx=feverEntrySpeed/);
 });
 
 test("revive reuses the angle and power launch flow without resetting progress", async () => {

@@ -88,3 +88,49 @@ export function scoreGrade(score) {
 export function scoreGradeDetails(score) {
   return SCORE_GRADES.find(grade => score >= grade.min);
 }
+
+export const FEVER_FLIGHT_TUNING = Object.freeze({
+  MAX_STAR_STEP_PX: 96,
+  MAX_PATH_SLOPE: 0.22,
+  MAX_VERTICAL_SPEED_PX_PER_SECOND: 720
+});
+
+const clamp = (value, minimum, maximum) =>
+  Math.min(maximum, Math.max(minimum, value));
+
+export function nextFeverStarY(
+  previousY,
+  randomValue,
+  minimumY,
+  maximumY,
+  horizontalDistance,
+  horizontalSpeed = 0
+) {
+  const lower = Math.min(minimumY, maximumY);
+  const upper = Math.max(minimumY, maximumY);
+  const start = clamp(Number.isFinite(previousY) ? previousY : upper, lower, upper);
+  const target = lower + (upper - lower) * clamp(randomValue, 0, 1);
+  const speedLimitedStep = horizontalSpeed > 0
+    ? Math.max(0, horizontalDistance)
+      * FEVER_FLIGHT_TUNING.MAX_VERTICAL_SPEED_PX_PER_SECOND
+      / (horizontalSpeed * 1.5)
+    : Number.POSITIVE_INFINITY;
+  const maximumStep = Math.min(
+    FEVER_FLIGHT_TUNING.MAX_STAR_STEP_PX,
+    Math.max(0, horizontalDistance) * FEVER_FLIGHT_TUNING.MAX_PATH_SLOPE,
+    speedLimitedStep
+  );
+  return clamp(start + clamp(target - start, -maximumStep, maximumStep), lower, upper);
+}
+
+export function feverPathState(startY, endY, progress, horizontalDistance) {
+  const t = clamp(progress, 0, 1);
+  const blend = t * t * (3 - 2 * t);
+  const derivative = 6 * t * (1 - t);
+  return {
+    y: startY + (endY - startY) * blend,
+    slope: derivative === 0
+      ? 0
+      : (endY - startY) * derivative / Math.max(1, Math.abs(horizontalDistance))
+  };
+}
