@@ -153,10 +153,10 @@ test("main and test-game fever behavior preserves layout and follows every star"
   assert.match(gameHtml, /feverEntrySpin=car\.vr<0\?-1:1/);
   assert.match(gameHtml, /function assignFeverStar\(o\).*nextFeverStarY/);
   assert.match(gameHtml, /function prepareFeverRoute\(\).*assignFeverStar/);
-  assert.match(gameHtml, /let path=feverPathAt\(car\.x\).*car\.y=path\.y.*car\.rot=Math\.atan\(path\.slope\)/);
+  assert.match(gameHtml, /let path=feverPathAt\(car\.x\).*car\.y=path\.y.*car\.rot=0/);
   assert.match(gameHtml, /crossed=feverStar\?o\.x>=minimumX&&o\.x<=maximumX/);
   assert.match(gameHtml, /touching=feverStar\|\|/);
-  assert.match(gameHtml, /feverActive&&Number\.isFinite\(o\.feverY\)\?worldY\(o\.feverY\)/);
+  assert.match(gameHtml, /worldY\(o\.feverY\)-y/);
   assert.match(gameHtml, /if\(feverEnding\)finishFeverOnStar\(\)/);
   assert.match(gameHtml, /car\.vx=feverEntrySpeed;car\.vy=Math\.max\(-SKY_ITEM_LIFT,Math\.min\(SKY_ITEM_LIFT,car\.vy\)\);car\.vr=feverEntrySpin/);
   assert.doesNotMatch(gameHtml, /function finishFeverOnStar\(\).*car\.y=ground\(\)/);
